@@ -1,0 +1,6 @@
+{
+	"identifier": "default",
+	"description": "What the TypeScript tests are allowed to call, as an app's capability would grant it.",
+	"windows": ["*"],
+	"permissions": ["7otion-sqlite:default"]
+}

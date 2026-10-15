@@ -1,0 +1,38 @@
+[workspace]
+members = ["harness"]
+
+[package]
+name = "tauri-plugin-7otion-sqlite"
+version = "0.1.0"
+description = "The Rust side of @7otion-tauri/orm: SQLite with a pinned writer per transaction and read-only connections beside it."
+authors = ["Burak Kartal"]
+license = "MIT"
+repository = "https://github.com/7otion/tauri-orm"
+edition = "2024"
+links = "tauri-plugin-7otion-sqlite"
+exclude = ["harness"]
+
+[features]
+encryption = ["libsqlite3-sys/bundled-sqlcipher"]
+encryption-vendored-openssl = [
+	"encryption",
+	"libsqlite3-sys/bundled-sqlcipher-vendored-openssl",
+]
+
+[dependencies]
+tauri = { version = "2.11", default-features = false }
+sqlx = { version = "0.8", default-features = false, features = [
+	"sqlite",
+	"runtime-tokio",
+] }
+libsqlite3-sys = { version = "0.30", default-features = false }
+tokio = { version = "1", default-features = false, features = ["sync", "time"] }
+serde = { version = "1", features = ["derive"] }
+# A REAL from JavaScript is stored as the same double only with exact float parsing.
+serde_json = { version = "1", features = ["float_roundtrip"] }
+thiserror = "2"
+base64 = "0.22"
+tracing = "0.1"
+
+[build-dependencies]
+tauri-plugin = { version = "2.6", features = ["build"] }

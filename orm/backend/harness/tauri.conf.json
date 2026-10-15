@@ -1,0 +1,17 @@
+{
+	"productName": "harness",
+	"version": "0.0.0",
+	"identifier": "com.7otion.tauri-orm.harness",
+	"build": {
+		"frontendDist": "assets"
+	},
+	"app": {
+		"windows": [],
+		"security": {
+			"csp": null
+		}
+	},
+	"bundle": {
+		"active": false
+	}
+}

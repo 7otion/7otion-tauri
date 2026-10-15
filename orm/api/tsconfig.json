@@ -1,0 +1,23 @@
+{
+	"compilerOptions": {
+		"target": "es2022",
+		"module": "ESNext",
+		"lib": ["es2022", "DOM"],
+		"moduleResolution": "bundler",
+		"types": ["bun", "svelte"],
+		"noEmit": true,
+		"strict": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"forceConsistentCasingInFileNames": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"noUncheckedIndexedAccess": true,
+		"strictPropertyInitialization": false,
+		"paths": { "@7otion-tauri/orm": ["./src/index.ts"] }
+	},
+	"include": ["src/**/*", "test/**/*"],
+	"exclude": ["node_modules"]
+}

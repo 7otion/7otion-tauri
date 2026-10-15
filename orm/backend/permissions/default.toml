@@ -1,0 +1,12 @@
+"$schema" = "schemas/schema.json"
+
+[default]
+description = "Allows loading, reading, writing and closing databases, and running transactions."
+permissions = [
+  "allow-load",
+  "allow-run",
+  "allow-begin",
+  "allow-commit",
+  "allow-rollback",
+  "allow-close",
+]

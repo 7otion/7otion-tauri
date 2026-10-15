@@ -1,0 +1,49 @@
+{
+	"name": "@7otion-tauri/orm",
+	"version": "0.0.1",
+	"author": "Burak Kartal",
+	"description": "Data and state for a Tauri app on SQLite, in Svelte: an Active Record ORM whose models and collections Svelte follows, and the stores over them.",
+	"type": "module",
+	"files": [
+		"src",
+		"docs",
+		"README.md",
+		"LICENSE"
+	],
+	"keywords": [
+		"orm",
+		"typescript",
+		"tauri",
+		"sqlite",
+		"svelte",
+		"active-record",
+		"query-builder"
+	],
+	"license": "MIT",
+	"svelte": "./src/index.ts",
+	"exports": {
+		".": {
+			"types": "./src/index.ts",
+			"svelte": "./src/index.ts",
+			"default": "./src/index.ts"
+		}
+	},
+	"scripts": {
+		"check": "bun run harness && tsc && bun run test",
+		"harness": "cargo build --manifest-path ../backend/harness/Cargo.toml",
+		"typecheck": "tsc",
+		"test": "bun test --conditions browser",
+		"format": "prettier --write ."
+	},
+	"devDependencies": {
+		"@tauri-apps/api": "^2",
+		"@types/bun": "^1.3.14",
+		"prettier": "^3",
+		"svelte": "^5.57",
+		"typescript": "^7"
+	},
+	"peerDependencies": {
+		"@tauri-apps/api": "^2",
+		"svelte": "^5.57"
+	}
+}
