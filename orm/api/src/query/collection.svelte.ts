@@ -238,13 +238,12 @@ export class LiveCollection<M extends Model> extends Collection<M> implements Li
 
 		let ask = false;
 		let rows = this.rows;
+		const deleted = new Set<Model>();
 		for (const entry of entries) {
 			if (decidedElsewhere(this.source, entry)) ask = true;
 			if (entry.model.constructor !== this.source.modelClass) continue;
 			if (entry.kind === 'deleted') {
-				if (rows.includes(entry.model as M)) {
-					rows = rows.filter(row => row !== entry.model);
-				}
+				deleted.add(entry.model);
 				if (this.source.bounded) ask = true;
 				continue;
 			}
@@ -254,6 +253,10 @@ export class LiveCollection<M extends Model> extends Collection<M> implements Li
 			) {
 				ask = true;
 			}
+		}
+		if (deleted.size) {
+			const kept = rows.filter(row => !deleted.has(row));
+			if (kept.length !== rows.length) rows = kept;
 		}
 
 		if (ask) {
