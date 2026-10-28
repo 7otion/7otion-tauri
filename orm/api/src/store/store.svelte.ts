@@ -39,6 +39,16 @@ export abstract class Store {
 		return Store.held(Store.ofApp, this);
 	}
 
+	/**
+	 * The instance of this class, asked for each time the returned function is called rather
+	 * than now. Two stores can keep each other this way: kept with `get()`, each would make the
+	 * other inside its own constructor, before either exists.
+	 */
+	static lazy<S extends Store>(this: StoreClass<S>): () => S {
+		const Class = this as StoreClass<S> & { get(): S };
+		return () => Class.get();
+	}
+
 	/** @internal The instance `stores` holds for `Class`, made and kept when there is none. */
 	protected static held<S extends Store>(
 		stores: Map<StoreClass<Store>, Held>,

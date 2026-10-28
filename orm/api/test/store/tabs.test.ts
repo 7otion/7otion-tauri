@@ -7,7 +7,7 @@ import { Model } from '../../src/model/model';
 import { TabScope } from '../../src/store/tab-scope';
 import { OrmBed } from '../harness/orm';
 import { storage } from '../harness/storage';
-import { Library, Results, Search, TabBreaks } from '../harness/stores.svelte';
+import { Library, Pane, Results, Search, TabBreaks } from '../harness/stores.svelte';
 
 describe('a store per tab', () => {
 	const orm = OrmBed.use();
@@ -45,6 +45,16 @@ describe('a store per tab', () => {
 		expect(results.library).toBe(Library.get());
 		expect(results.database).toBe(database);
 		expect(Search.get(new TabScope())).not.toBe(results.search);
+	});
+
+	test('a tab store kept lazily is the one of the tab that keeps it, asked for after construction', () => {
+		connect();
+		const scope = new TabScope();
+
+		const pane = Pane.get(scope);
+
+		expect(pane.search()).toBe(Search.get(scope));
+		expect(Pane.get(new TabScope()).search()).not.toBe(pane.search());
 	});
 
 	test('a scope asked for with no database connected is refused', () => {

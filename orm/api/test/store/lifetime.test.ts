@@ -8,7 +8,17 @@ import { Model } from '../../src/model/model';
 import { Stored } from '../../src/store/stored.svelte';
 import { OrmBed } from '../harness/orm';
 import { storage } from '../harness/storage';
-import { Breaks, Counter, Library, Settings, Throws } from '../harness/stores.svelte';
+import {
+	Breaks,
+	Counter,
+	KeepsThrows,
+	Library,
+	Ping,
+	Pong,
+	Settings,
+	Shell,
+	Throws,
+} from '../harness/stores.svelte';
 import { Watch } from '../harness/watch.svelte';
 
 describe('how long a store lives', () => {
@@ -77,6 +87,40 @@ describe('how long a store lives', () => {
 
 		expect(doubled.last).toBe(4);
 		doubled.stop();
+	});
+
+	test('two stores that keep each other lazily are each the one get() returns', () => {
+		connect();
+		const ping = Ping.get();
+
+		expect(ping.pong()).toBe(Pong.get());
+		expect(Pong.get().ping()).toBe(ping);
+	});
+
+	test('what a store derives from one it keeps lazily follows it', () => {
+		connect();
+		const hits = new Watch(() => Pong.get().pingHits);
+
+		Ping.get().hits = 3;
+
+		expect(hits.last).toBe(3);
+		hits.stop();
+	});
+
+	test('a store kept lazily is not made until it is first asked for', () => {
+		connect();
+		const keeps = KeepsThrows.get();
+
+		expect(() => keeps.throws()).toThrow('constructor bug');
+	});
+
+	test('a store kept lazily is asked for again on each call, so it follows the connected database', () => {
+		const first = connect();
+		expect(Shell.get().library().database).toBe(first);
+
+		const second = connect();
+
+		expect(Shell.get().library().database).toBe(second);
 	});
 
 	test('a store made by the expression that first reads it is followed by that expression', () => {

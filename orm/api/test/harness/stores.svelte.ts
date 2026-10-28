@@ -31,6 +31,27 @@ export class Counter extends ConnectionStore {
 	}
 }
 
+/** Keeps Pong lazily, as Pong keeps it: kept with `get()`, each would make the other forever. */
+export class Ping extends ConnectionStore {
+	readonly pong = Pong.lazy();
+	hits = $state(0);
+}
+
+export class Pong extends ConnectionStore {
+	readonly ping = Ping.lazy();
+	readonly pingHits = $derived(this.ping().hits);
+}
+
+/** Keeps a store whose constructor throws, lazily. */
+export class KeepsThrows extends ConnectionStore {
+	readonly throws = Throws.lazy();
+}
+
+/** A store for the whole app that keeps a database store lazily. */
+export class Shell extends Store {
+	readonly library = Library.lazy();
+}
+
 export class Breaks extends ConnectionStore {
 	constructor() {
 		super();
@@ -80,6 +101,11 @@ export class Results extends TabStore {
 			this.shown.push(this.search.term);
 		});
 	}
+}
+
+/** Keeps its tab's search lazily. */
+export class Pane extends TabStore {
+	readonly search = Search.lazy();
 }
 
 export class TabBreaks extends TabStore {

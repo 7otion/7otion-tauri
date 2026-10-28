@@ -46,6 +46,32 @@ another one with `Other.get()`.
 | `this.query(() => Model.query()…)`   | a live query                                     |
 | `this.counted(() => Model.query()…)` | a live row count                                 |
 
+### Two stores that use each other
+
+`Other.get()` in a field runs while the store is being constructed, so two stores
+can't keep each other that way: each would construct the other before either
+exists, and the call stack overflows. Keep one side, or both, with `lazy()`. It
+returns a function that asks for the store when it's called:
+
+```ts
+class Library extends ConnectionStore {
+	readonly #groups = Groups.lazy();
+	readonly grouped = $derived(this.files.rows.filter(file => this.#groups().has(file)));
+}
+
+class Groups extends ConnectionStore {
+	readonly #library = Library.lazy();
+	has(file: File): boolean { … }
+}
+```
+
+Call it in methods, `$derived`, queries and effects, which run after both
+constructors returned; calling it in a field initializer would construct the
+other store right away again. Each call asks again, so a store for the whole
+app that keeps a connection store gets the current database's one. A tab store
+keeps the tab it was asked in; outside a component, pass the scope:
+`Search.lazy(scope)`.
+
 ## Queries
 
 A query loads itself and re-runs when state it reads changes, such as `search`

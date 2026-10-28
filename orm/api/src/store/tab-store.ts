@@ -39,6 +39,16 @@ export abstract class TabStore extends Store {
 		}
 	}
 
+	/**
+	 * The instance of this class, asked for each time the returned function is called rather
+	 * than now, in `scope`; without it, in the scope `get()` would use where this is asked.
+	 */
+	static override lazy<S extends Store>(this: StoreClass<S>, scope?: TabScope): () => S {
+		const within = scope ?? TabStore.constructingIn ?? TabScope.current(this.name);
+		const Class = this as StoreClass<S> & { get(scope: TabScope): S };
+		return () => Class.get(within);
+	}
+
 	protected override get prefix(): string {
 		const { namespace } = this.scope;
 		return `${this.database.namespace}.${namespace ? `${namespace}.` : ''}`;
