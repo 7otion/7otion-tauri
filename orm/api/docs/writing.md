@@ -53,6 +53,36 @@ const removed = await User.deleteMany(users);
 Bulk writes are batched into as few statements as possible and wrapped in a
 transaction when they need more than one.
 
+## Many models, skipping the ones already there
+
+```ts
+const added = await PostTag.createManyOrIgnore([
+	{ post_id: 1, tag: 'a' },
+	{ post_id: 1, tag: 'b' },
+]);
+const users = await User.createManyOrIgnore(rows, { uniqueBy: ['email'] });
+```
+
+A row that clashes with a unique constraint (the primary key or any `UNIQUE`
+column) is skipped instead of failing the write (`ON CONFLICT DO NOTHING`).
+Every other failure, `NOT NULL` or `CHECK` included, still throws. It returns
+the models that went in, in the order given; a skipped one stays unsaved.
+
+- The models that went in are matched to their rows by key, or by `uniqueBy`
+  when given. A key the app supplies needs nothing more: the rows share one
+  statement.
+- A key the database generates tells nothing about which row is whose, so
+  without `uniqueBy` each row goes in its own statement, all in one
+  transaction. With `uniqueBy` they share one.
+- The same key (or `uniqueBy` value) twice in one call: the first row wins and
+  the later ones are skipped without being sent. A later one is not tried even
+  when the first is skipped for a clash on another column.
+- A row with a NULL among those columns can't be matched by them, so it goes
+  in its own statement.
+- `create:after`, `save:after` and the `:committed` handlers run for the rows
+  that went in only. Which rows go in is known only after the insert, so a
+  model with a `create:before` or `save:before` handler is refused.
+
 ## Every matching row
 
 ```ts

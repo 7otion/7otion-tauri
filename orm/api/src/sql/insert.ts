@@ -9,10 +9,11 @@ export class InsertBuilder implements StatementSource {
 		private readonly table: string,
 		private readonly rows: readonly Values[],
 		private readonly returned: readonly string[],
+		private readonly isIgnoringConflicts: boolean,
 	) {}
 
 	static into(table: string): InsertBuilder {
-		return new InsertBuilder(table, [], []);
+		return new InsertBuilder(table, [], [], false);
 	}
 
 	/** Every row must set the same columns. */
@@ -24,14 +25,26 @@ export class InsertBuilder implements StatementSource {
 			this.table,
 			[...this.rows, ...added],
 			this.returned,
+			this.isIgnoringConflicts,
 		) as this;
 	}
 
 	returning(...columns: string[]): this {
-		return new InsertBuilder(this.table, this.rows, [
-			...this.returned,
-			...columns,
-		]) as this;
+		return new InsertBuilder(
+			this.table,
+			this.rows,
+			[...this.returned, ...columns],
+			this.isIgnoringConflicts,
+		) as this;
+	}
+
+	onConflictDoNothing(): this {
+		return new InsertBuilder(
+			this.table,
+			this.rows,
+			this.returned,
+			true,
+		) as this;
 	}
 
 	toStatement(): Statement {
@@ -44,6 +57,11 @@ export class InsertBuilder implements StatementSource {
 		const columns = Object.keys(this.rows[0]!);
 
 		if (columns.length === 0) {
+			if (this.isIgnoringConflicts) {
+				throw new QueryError(
+					'[orm] A row of defaults cannot skip conflicts: SQLite has no ON CONFLICT after DEFAULT VALUES.',
+				);
+			}
 			if (this.rows.length > 1) {
 				throw new QueryError(
 					'[orm] Only one row of defaults can be inserted per statement.',
@@ -74,6 +92,7 @@ export class InsertBuilder implements StatementSource {
 			into,
 			`(${writer.identifiers(columns)})`,
 			`VALUES ${rows.join(', ')}`,
+			this.isIgnoringConflicts ? 'ON CONFLICT DO NOTHING' : '',
 			this.writeReturning(writer),
 		]);
 	}

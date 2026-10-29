@@ -1,6 +1,7 @@
 import type { Row, Value } from '../database/statement';
 import type { Transaction } from '../database/transaction';
 import { OrmError } from '../errors';
+import { INSERT_VERBS } from '../events/events';
 import { IdentityMap } from '../model/identity-map';
 import type { Model } from '../model/model';
 import type { Changes, ModelClass } from '../model/types';
@@ -18,9 +19,16 @@ interface InsertChunk<M> {
 	sent: Record<string, unknown>[];
 }
 
+export interface InsertOrIgnoreOptions<C extends string = string> {
+	uniqueBy?: readonly C[];
+}
+
 /** Inserts a list of models; one model is a list of one. */
 export class ModelInsert<M extends Model> {
-	constructor(private readonly modelClass: ModelClass<M>) {}
+	constructor(
+		private readonly modelClass: ModelClass<M>,
+		private readonly ignoring: InsertOrIgnoreOptions | null = null,
+	) {}
 
 	/** The inserted models, or what `answer` makes of them; an `AfterCommitError` carries the same. */
 	write(given: readonly M[], tx?: Transaction): Promise<M[]>;
@@ -36,6 +44,7 @@ export class ModelInsert<M extends Model> {
 	): Promise<R | M[]> {
 		const result = answer ?? ((written: M[]) => written);
 		const models = Drafts.models(given);
+		if (this.ignoring) this.assertNoBeforeHandlers();
 		for (const model of models) {
 			model.$assertWritable(tx);
 			if (model.$exists) {
@@ -44,13 +53,14 @@ export class ModelInsert<M extends Model> {
 				);
 			}
 		}
-		if (models.length === 0) return result([]);
+		const sent = this.ignoring ? this.firstOfEach(models) : models;
+		if (sent.length === 0) return result([]);
 
 		return WriteLifecycle.around(
 			this.modelClass,
 			'created',
-			{ tx, oneStatement: () => this.statements(models) === 1 },
-			async lifecycle => result(await this.within(lifecycle, models)),
+			{ tx, oneStatement: () => this.statements(sent) === 1 },
+			async lifecycle => result(await this.within(lifecycle, sent)),
 		);
 	}
 
@@ -80,8 +90,9 @@ export class ModelInsert<M extends Model> {
 		}
 
 		// Handlers get the models in the order given, not grouped by INSERT.
-		await lifecycle.finish(models.map(model => byModel.get(model)!));
-		return [...models];
+		const inserted = models.filter(model => byModel.has(model));
+		await lifecycle.finish(inserted.map(model => byModel.get(model)!));
+		return inserted;
 	}
 
 	/** A new row's changes: every value from nothing. */
@@ -115,23 +126,35 @@ export class ModelInsert<M extends Model> {
 
 		// The database fills the columns the rows leave out. RETURNING asks for them, and for
 		// the key, to tell which returned row belongs to which model.
-		const asked =
-			unsent.length === 0 ? [] : [...new Set([...keyColumns, ...unsent])];
+		const matching = this.matchingColumns(rows[0]!);
+		const asked = this.ignoring
+			? [...new Set([...keyColumns, ...(matching ?? []), ...unsent])]
+			: unsent.length === 0
+				? []
+				: [...new Set([...keyColumns, ...unsent])];
+		const insert = InsertBuilder.into(table.name).values(rows);
 		const result = await this.modelClass.database.run(
-			InsertBuilder.into(table.name)
-				.values(rows)
-				.returning(...asked),
+			(this.ignoring ? insert.onConflictDoNothing() : insert).returning(
+				...asked,
+			),
 			tx,
 		);
 
-		if (asked.length > 0 && result.rows.length !== models.length) {
+		if (
+			!this.ignoring &&
+			asked.length > 0 &&
+			result.rows.length !== models.length
+		) {
 			throw new OrmError(
 				`[orm] Inserting ${models.length} ${table.name} rows returned ${result.rows.length}.`,
 			);
 		}
 
-		const returned = this.inModelOrder(models, result.rows, unsent);
-		return models.map((model, index) => {
+		const returned = this.ignoring
+			? this.insertedIn(models, result.rows, matching)
+			: this.inModelOrder(models, result.rows, unsent);
+		return models.flatMap((model, index) => {
+			if (this.ignoring && !returned[index]) return [];
 			const supplied = this.supplied(unsent, returned[index]);
 			const before = model.$attributes.shownSnapshot();
 			model.$attributes.written(sent[index]!, supplied, tx);
@@ -238,7 +261,7 @@ export class ModelInsert<M extends Model> {
 			const parts =
 				columns === 0 || this.keyFilledByDefault(shape.rows[0]!)
 					? indexes.map(index => [index])
-					: Chunks.of(indexes, columns);
+					: this.parts(shape.models, columns);
 
 			for (const part of parts) {
 				chunks.push({
@@ -255,6 +278,83 @@ export class ModelInsert<M extends Model> {
 		const { primaryKey } = this.modelClass.table;
 		return primaryKey.columns.some(
 			column => !(column in row) && column !== primaryKey.generated,
+		);
+	}
+
+	private parts(models: readonly M[], columns: number): number[][] {
+		const indexes = models.map((_, index) => index);
+		if (!this.ignoring) return Chunks.of(indexes, columns);
+		const parts: number[][] = [];
+		let run: number[] = [];
+		for (const index of indexes) {
+			if (this.matchSignature(models[index]!) !== null) {
+				run.push(index);
+				continue;
+			}
+			parts.push(...Chunks.of(run, columns), [index]);
+			run = [];
+		}
+		parts.push(...Chunks.of(run, columns));
+		return parts;
+	}
+
+	private insertedIn(
+		models: readonly M[],
+		rows: readonly Row[],
+		matching: readonly string[] | null,
+	): (Row | undefined)[] {
+		if (models.length === 1) return [rows[0]];
+		const { table } = this.modelClass;
+		const byMatch = new Map(
+			rows.map(row => [this.signatureOf(matching!, table.decode(row)), row]),
+		);
+		return models.map(model =>
+			byMatch.get(
+				this.signatureOf(matching!, model.$attributes.draftValues()),
+			),
+		);
+	}
+
+	private firstOfEach(models: readonly M[]): M[] {
+		const seen = new Set<string>();
+		return models.filter(model => {
+			const signature = this.matchSignature(model);
+			if (signature === null) return true;
+			if (seen.has(signature)) return false;
+			seen.add(signature);
+			return true;
+		});
+	}
+
+	private matchSignature(model: M): string | null {
+		const values = model.$attributes.draftValues();
+		const columns = this.matchingColumns(values);
+		return columns === null ? null : this.signatureOf(columns, values);
+	}
+
+	private matchingColumns(
+		values: Readonly<Record<string, unknown>>,
+	): readonly string[] | null {
+		if (this.ignoring?.uniqueBy) return this.ignoring.uniqueBy;
+		const { primaryKey } = this.modelClass.table;
+		return primaryKey.generatedIn(values) === null ? primaryKey.columns : null;
+	}
+
+	private signatureOf(
+		columns: readonly string[],
+		values: Readonly<Record<string, unknown>>,
+	): string | null {
+		return this.modelClass.table.signature(
+			columns,
+			columns.map(column => values[column]),
+		);
+	}
+
+	private assertNoBeforeHandlers(): void {
+		if (!this.modelClass.$events.has(INSERT_VERBS, ['before'])) return;
+		throw new OrmError(
+			`[orm] ${this.modelClass.name} has a create:before or save:before handler, which ` +
+				'createManyOrIgnore cannot run: which rows go in is known only after the insert.',
 		);
 	}
 }

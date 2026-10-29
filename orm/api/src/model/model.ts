@@ -32,7 +32,10 @@ import type { Column } from '../schema/column';
 import { Table, type TableDefinition } from '../schema/table';
 import { SelectBuilder } from '../sql/select';
 import { ModelDelete } from '../write/model-delete';
-import { ModelInsert } from '../write/model-insert';
+import {
+	ModelInsert,
+	type InsertOrIgnoreOptions,
+} from '../write/model-insert';
 import { ModelUpdate } from '../write/model-update';
 import {
 	RelationWriter,
@@ -252,6 +255,18 @@ abstract class BaseModel {
 		tx?: Transaction,
 	): Promise<M[]> {
 		return new ModelInsert(this).write(
+			rows.map(row => new this().fill(row)),
+			tx,
+		);
+	}
+
+	static createManyOrIgnore<M extends Model>(
+		this: ModelClass<M>,
+		rows: readonly NoInfer<Patch<M>>[],
+		options: InsertOrIgnoreOptions<ColumnKey<M>> = {},
+		tx?: Transaction,
+	): Promise<M[]> {
+		return new ModelInsert(this, options).write(
 			rows.map(row => new this().fill(row)),
 			tx,
 		);

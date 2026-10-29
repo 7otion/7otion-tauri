@@ -262,6 +262,16 @@ const cases: Case[] = [
 		sql: 'INSERT INTO `users` DEFAULT VALUES RETURNING *',
 	},
 	{
+		name: 'insert skipping rows that clash with a unique constraint, the clause before RETURNING',
+		statement: () =>
+			InsertBuilder.into('users')
+				.values([{ name: 'a' }, { name: 'b' }])
+				.returning('id')
+				.onConflictDoNothing(),
+		sql: 'INSERT INTO `users` (`name`) VALUES (?), (?) ON CONFLICT DO NOTHING RETURNING `id`',
+		params: ['a', 'b'],
+	},
+	{
 		name: 'update; assignments merge, the later value winning',
 		statement: () =>
 			UpdateBuilder.table('users')
@@ -365,6 +375,12 @@ const cases: Case[] = [
 	{
 		name: 'an insert without rows is refused',
 		statement: () => InsertBuilder.into('users'),
+		refused: true,
+	},
+	{
+		name: 'a row of defaults that skips conflicts is refused: SQLite has no ON CONFLICT after DEFAULT VALUES',
+		statement: () =>
+			InsertBuilder.into('users').values({}).onConflictDoNothing(),
 		refused: true,
 	},
 	{
