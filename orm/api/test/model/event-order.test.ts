@@ -27,7 +27,11 @@ describe('what handlers are told, and in which order', () => {
 			names = written.map(([model]) => model.name);
 		});
 
-		await User.createMany([{ name: 'a' }, { name: 'b', age: 1 }, { name: 'c' }]);
+		await User.createMany([
+			{ name: 'a' },
+			{ name: 'b', age: 1 },
+			{ name: 'c' },
+		]);
 
 		expect(names).toEqual(['a', 'b', 'c']);
 	});
@@ -66,7 +70,10 @@ describe('what handlers are told, and in which order', () => {
 			expect(await user.delete(tx)).toBe(true);
 			User.registerEvent('delete:before', null);
 
-			const again = await User.create({ id: oldId, name: 'Bob' } as never, tx);
+			const again = await User.create(
+				{ id: oldId, name: 'Bob' } as never,
+				tx,
+			);
 			second = await again.delete(tx);
 		});
 

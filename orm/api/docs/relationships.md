@@ -32,14 +32,14 @@ types. Use `declare`, not `!`, or the field hides the relation.
 Keys are always explicit. Pass the related model as a function (`() => Post`)
 so models can refer to each other.
 
-| relation        | options                                                                  |
-| --------------- | ------------------------------------------------------------------------ |
-| `hasOne`        | `foreignKey`; `localKey` defaults to the primary key.                    |
-| `hasMany`       | Same as `hasOne`.                                                        |
-| `belongsTo`     | `foreignKey`; `ownerKey` defaults to the related primary key.            |
+| relation        | options                                                                            |
+| --------------- | ---------------------------------------------------------------------------------- |
+| `hasOne`        | `foreignKey`; `localKey` defaults to the primary key.                              |
+| `hasMany`       | Same as `hasOne`.                                                                  |
+| `belongsTo`     | `foreignKey`; `ownerKey` defaults to the related primary key.                      |
 | `belongsToMany` | `pivot`, `foreignPivotKey`, `relatedPivotKey`; optional `parentKey`, `relatedKey`. |
-| `morphMany`     | Like `hasMany`, plus `typeColumn` and `typeValue`.                       |
-| `morphTo`       | `typeColumn`, `keyColumn`, and `types`.                                  |
+| `morphMany`     | Like `hasMany`, plus `typeColumn` and `typeValue`.                                 |
+| `morphTo`       | `typeColumn`, `keyColumn`, and `types`.                                            |
 
 `hasOne`, `hasMany`, `belongsTo` and `morphMany` accept composite keys as
 arrays.

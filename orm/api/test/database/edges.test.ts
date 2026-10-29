@@ -16,8 +16,7 @@ describe('database edges', () => {
 		bed.crate.invoke(PREFIX + command, args) as Promise<any>;
 
 	const load = async () =>
-		(await call('load', { path: FILE, config: null }))
-			.handle as number;
+		(await call('load', { path: FILE, config: null })).handle as number;
 
 	test('run() rejects, rather than throwing, when the statement cannot be written', async () => {
 		const db = bed.database();
@@ -75,7 +74,9 @@ describe('database edges', () => {
 		expect((await db.run(new Statement('SELECT x FROM b'))).rows).toEqual([
 			{ x: 1 },
 		]);
-		expect((await db.run(new Statement('SELECT x FROM a'))).rows).toEqual([]);
+		expect((await db.run(new Statement('SELECT x FROM a'))).rows).toEqual(
+			[],
+		);
 	});
 
 	test('an empty blob reads back as an empty blob', async () => {
@@ -94,7 +95,9 @@ describe('database edges', () => {
 	});
 
 	test('a whole number JavaScript cannot hold exactly is refused, and nothing is written', async () => {
-		const db = await bed.databaseWith(['CREATE TABLE numbers (value INTEGER)']);
+		const db = await bed.databaseWith([
+			'CREATE TABLE numbers (value INTEGER)',
+		]);
 
 		await db.run(
 			new Statement('INSERT INTO numbers VALUES (?)', [
@@ -138,7 +141,10 @@ describe('database edges', () => {
 			new Statement('SELECT count(*) AS n FROM numbers'),
 		);
 
-		expect({ code: error.code, rows }).toEqual({ code: 'value', rows: [{ n: 0 }] });
+		expect({ code: error.code, rows }).toEqual({
+			code: 'value',
+			rows: [{ n: 0 }],
+		});
 	});
 
 	test('a statement queued on a transaction that SQLite then ended is refused, not run outside it', async () => {

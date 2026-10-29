@@ -98,7 +98,10 @@ export class Transaction {
 		const interleaved = this.unstack(name);
 		if (interleaved) throw interleaved;
 		try {
-			await this.database.run(new Statement(`RELEASE SAVEPOINT ${name}`), this);
+			await this.database.run(
+				new Statement(`RELEASE SAVEPOINT ${name}`),
+				this,
+			);
 		} catch (error) {
 			await this.discard(name, restoreFrom, marks);
 			throw error;
@@ -131,7 +134,10 @@ export class Transaction {
 			try {
 				restore();
 			} catch (error) {
-				console.error('[orm] Undoing a write after a rollback failed.', error);
+				console.error(
+					'[orm] Undoing a write after a rollback failed.',
+					error,
+				);
 			}
 		}
 	}
@@ -175,20 +181,25 @@ export class Transaction {
 		const failures: AfterCommitFailure[] = [];
 		const afterwards: AfterCommitTask[] = [];
 		const taken = (source: string, result: unknown): void => {
-			if (Array.isArray(result)) failures.push(...(result as AfterCommitFailure[]));
-			else if (typeof result === 'function') afterwards.push({ source, run: result as () => unknown });
+			if (Array.isArray(result))
+				failures.push(...(result as AfterCommitFailure[]));
+			else if (typeof result === 'function')
+				afterwards.push({ source, run: result as () => unknown });
 		};
 
 		Notices.hold();
 		try {
-			for (const { source, run } of this.journal<AfterCommitTask>(AFTER_COMMIT).splice(0)) {
+			for (const { source, run } of this.journal<AfterCommitTask>(
+				AFTER_COMMIT,
+			).splice(0)) {
 				try {
 					taken(source, await run());
 				} catch (error) {
 					failures.push({ source, error });
 				}
 			}
-			for (const notice of this.journal<() => void>(NOTICES).splice(0)) notice();
+			for (const notice of this.journal<() => void>(NOTICES).splice(0))
+				notice();
 		} finally {
 			Notices.release();
 		}

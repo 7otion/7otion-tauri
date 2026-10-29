@@ -89,7 +89,9 @@ describe('mutators', () => {
 				},
 			});
 
-			static readonly mutators = this.mutate({ label: value => `[${value}]` });
+			static readonly mutators = this.mutate({
+				label: value => `[${value}]`,
+			});
 		}
 		class Owner extends Model<typeof Owner.schema> {
 			static readonly schema = this.define({
@@ -103,7 +105,9 @@ describe('mutators', () => {
 			};
 		}
 
-		await (await Owner.find(1))!.sync('marks', ['a'], { matchOn: ['label'] });
+		await (await Owner.find(1))!.sync('marks', ['a'], {
+			matchOn: ['label'],
+		});
 
 		expect(await Mark.query().pluck('label')).toEqual(['[a]']);
 	});
@@ -112,7 +116,10 @@ describe('mutators', () => {
 		class Base extends Model<typeof Base.schema> {
 			static readonly schema = this.define({
 				table: 't',
-				columns: { id: Column.integer().primary(), name: Column.text() },
+				columns: {
+					id: Column.integer().primary(),
+					name: Column.text(),
+				},
 			});
 		}
 		class Sub extends Base {
@@ -128,7 +135,9 @@ describe('mutators', () => {
 		const db = await orm.open();
 		await db.run(new Statement(DRAFTS));
 		await db.run(
-			new Statement("INSERT INTO drafts (title, slug) VALUES ('  raw  ', 'raw')"),
+			new Statement(
+				"INSERT INTO drafts (title, slug) VALUES ('  raw  ', 'raw')",
+			),
 		);
 
 		expect((await Article.query().first())!.title).toBe('  raw  ');
@@ -157,7 +166,9 @@ export function mutatorsAreTyped(): void {
 		});
 
 		// @ts-expect-error no column named `nmae`
-		static readonly mutators = this.mutate({ nmae: (value: string) => value });
+		static readonly mutators = this.mutate({
+			nmae: (value: string) => value,
+		});
 	}
 	void Misnamed;
 }

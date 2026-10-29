@@ -111,14 +111,31 @@ describe('statement logging', () => {
 			outside = db.run(insert('outside'));
 			await new Promise(resolve => setTimeout(resolve, 40));
 		});
-		const { timing } = (await outside) as { timing: Record<string, number> };
+		const { timing } = (await outside) as {
+			timing: Record<string, number>;
+		};
 
 		expect(timing.waitedMs).toBeGreaterThanOrEqual(30);
-		const line = printed.map(line => line.text).find(text => text.startsWith('db '))!;
-		const parts = [...line.matchAll(/(\w+) (\d+\.\d+)ms/g)].map(m => [m[1], Number(m[2])]);
-		const [db_, wait, plugin, render, total] = parts.map(([, n]) => n as number);
-		expect(parts.map(([name]) => name)).toEqual(['db', 'wait', 'plugin', 'render', 'total']);
-		expect(Math.abs(db_! + wait! + plugin! + render! - total!)).toBeLessThan(0.3);
+		const line = printed
+			.map(line => line.text)
+			.find(text => text.startsWith('db '))!;
+		const parts = [...line.matchAll(/(\w+) (\d+\.\d+)ms/g)].map(m => [
+			m[1],
+			Number(m[2]),
+		]);
+		const [db_, wait, plugin, render, total] = parts.map(
+			([, n]) => n as number,
+		);
+		expect(parts.map(([name]) => name)).toEqual([
+			'db',
+			'wait',
+			'plugin',
+			'render',
+			'total',
+		]);
+		expect(
+			Math.abs(db_! + wait! + plugin! + render! - total!),
+		).toBeLessThan(0.3);
 	});
 
 	test('a failing statement is printed expanded, with its error', async () => {
@@ -217,7 +234,9 @@ describe('statement logging', () => {
 			),
 		);
 
-		const params = printed.find(line => line.text.startsWith('params'))!.text;
+		const params = printed.find(line =>
+			line.text.startsWith('params'),
+		)!.text;
 		expect(params.startsWith('params  1: 1   2: 2   ')).toBe(true);
 		expect(params.endsWith('50: 50   …and 10 more')).toBe(true);
 	});

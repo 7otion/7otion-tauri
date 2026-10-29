@@ -25,7 +25,10 @@ export class Drafts {
 		if (held) return held as M;
 
 		const draft = Object.create(
-			Drafts.prototypeFor(model.constructor as ModelClass, modelPrototype),
+			Drafts.prototypeFor(
+				model.constructor as ModelClass,
+				modelPrototype,
+			),
 			{ $owner: { value: model } },
 		) as M;
 		model.$draft = draft;
@@ -35,7 +38,9 @@ export class Drafts {
 	/** The models given to a write, a draft standing for its model, each once. */
 	static models<M extends Model>(given: readonly M[]): M[] {
 		return [
-			...new Set(given.map(value => ((value as { $owner?: M }).$owner) ?? value)),
+			...new Set(
+				given.map(value => (value as { $owner?: M }).$owner ?? value),
+			),
 		];
 	}
 
@@ -43,15 +48,21 @@ export class Drafts {
 	 * What `patch` becomes through the mutators, staged off the draft: a mutator reads and sets
 	 * columns on a stand-in that shows the draft, and the draft itself is left as it is.
 	 */
-	static staged(model: Model, patch: Readonly<Record<string, unknown>>): Record<string, unknown> {
+	static staged(
+		model: Model,
+		patch: Readonly<Record<string, unknown>>,
+	): Record<string, unknown> {
 		const draft = model.draft();
 		const { table, mutators } = model.constructor as ModelRef<any>;
 		const staged: Record<string, unknown> = {};
 		const stand = new Proxy(draft, {
 			get: (target, key) =>
-				typeof key === 'string' && key in staged ? staged[key] : Reflect.get(target, key, target),
+				typeof key === 'string' && key in staged
+					? staged[key]
+					: Reflect.get(target, key, target),
 			set: (target, key, value) => {
-				if (typeof key !== 'string' || !table.has(key)) return Reflect.set(target, key, value, target);
+				if (typeof key !== 'string' || !table.has(key))
+					return Reflect.set(target, key, value, target);
 				staged[key] = model.$attributes.assignable(key, value);
 				return true;
 			},
@@ -59,15 +70,21 @@ export class Drafts {
 
 		for (const [column, given] of Object.entries(patch)) {
 			if (given === undefined) continue;
-			const value = table.has(column) ? table.column(column).accept(given) : given;
-			const mutator = mutators?.[column] as ((value: unknown, draft: Model) => unknown) | undefined;
+			const value = table.has(column)
+				? table.column(column).accept(given)
+				: given;
+			const mutator = mutators?.[column] as
+				((value: unknown, draft: Model) => unknown) | undefined;
 			const mutated = mutator ? mutator(value, stand) : value;
 			staged[column] = model.$attributes.assignable(column, mutated);
 		}
 		return staged;
 	}
 
-	private static prototypeFor(modelClass: ModelClass, modelPrototype: object): object {
+	private static prototypeFor(
+		modelClass: ModelClass,
+		modelPrototype: object,
+	): object {
 		let prototype = Drafts.prototypes.get(modelClass);
 		if (!prototype) {
 			prototype = Drafts.build(modelClass, modelPrototype);
@@ -76,7 +93,10 @@ export class Drafts {
 		return prototype;
 	}
 
-	private static build(modelClass: ModelClass, modelPrototype: object): object {
+	private static build(
+		modelClass: ModelClass,
+		modelPrototype: object,
+	): object {
 		const prototype = Object.create(modelClass.prototype);
 
 		for (const [column, type] of modelClass.table.columns) {
@@ -87,7 +107,12 @@ export class Drafts {
 					owner.$assertReadable();
 					owner.$signals.readEdit(column);
 					const value = owner.$attributes.draftValue(column);
-					if (!type.copiedByDraft || value === null || typeof value !== 'object') return value;
+					if (
+						!type.copiedByDraft ||
+						value === null ||
+						typeof value !== 'object'
+					)
+						return value;
 					const copy = owner.$attributes.pendingCopy(column);
 					// A date or a byte array is not a proxy's to wrap; anything else edited in place is announced.
 					return copy instanceof Date || ArrayBuffer.isView(copy)
@@ -97,11 +122,15 @@ export class Drafts {
 				set(this: DraftWithOwner, given: unknown) {
 					const owner = this.$owner;
 					let value = type.accept(given);
-					const mutator = (owner.constructor as ModelRef<any>).mutators?.[column] as
-						| ((value: unknown, model: Model) => unknown)
-						| undefined;
+					const mutator = (owner.constructor as ModelRef<any>)
+						.mutators?.[column] as
+						((value: unknown, model: Model) => unknown) | undefined;
 
-					if (mutator && value !== undefined && !Drafts.mutating.has(owner)) {
+					if (
+						mutator &&
+						value !== undefined &&
+						!Drafts.mutating.has(owner)
+					) {
 						Drafts.mutating.add(owner);
 						try {
 							value = mutator(value, this);
@@ -119,18 +148,35 @@ export class Drafts {
 		}
 
 		// The owner's internals, so a relation accessor or a method inherited from the class finds them.
-		for (const name of ['$attributes', '$relations', '$signals', '$exists', '$generation', '$scope']) {
+		for (const name of [
+			'$attributes',
+			'$relations',
+			'$signals',
+			'$exists',
+			'$generation',
+			'$scope',
+		]) {
 			Object.defineProperty(prototype, name, {
 				configurable: true,
 				get(this: DraftWithOwner) {
-					return (this.$owner as unknown as Record<string, unknown>)[name];
+					return (this.$owner as unknown as Record<string, unknown>)[
+						name
+					];
 				},
 			});
 		}
 
 		Object.defineProperties(prototype, {
-			model: { value: function (this: DraftWithOwner) { return this.$owner; } },
-			draft: { value: function (this: DraftWithOwner) { return this; } },
+			model: {
+				value: function (this: DraftWithOwner) {
+					return this.$owner;
+				},
+			},
+			draft: {
+				value: function (this: DraftWithOwner) {
+					return this;
+				},
+			},
 			toObject: {
 				value: function (this: DraftWithOwner) {
 					this.$owner.$signals.readRow();
@@ -143,19 +189,29 @@ export class Drafts {
 		// Everything else `Model` offers runs on the owner: a write must take the model, not its draft.
 		for (const name of Object.getOwnPropertyNames(modelPrototype)) {
 			if (OWN.has(name)) continue;
-			const member = Object.getOwnPropertyDescriptor(modelPrototype, name)!;
+			const member = Object.getOwnPropertyDescriptor(
+				modelPrototype,
+				name,
+			)!;
 			if (typeof member.value === 'function') {
 				Object.defineProperty(prototype, name, {
 					configurable: true,
 					value: function (this: DraftWithOwner, ...args: unknown[]) {
-						return (this.$owner as unknown as Record<string, (...a: unknown[]) => unknown>)[name]!(...args);
+						return (
+							this.$owner as unknown as Record<
+								string,
+								(...a: unknown[]) => unknown
+							>
+						)[name]!(...args);
 					},
 				});
 			} else if (member.get) {
 				Object.defineProperty(prototype, name, {
 					configurable: true,
 					get(this: DraftWithOwner) {
-						return (this.$owner as unknown as Record<string, unknown>)[name];
+						return (
+							this.$owner as unknown as Record<string, unknown>
+						)[name];
 					},
 				});
 			}
@@ -175,16 +231,20 @@ export class Drafts {
 		return new Proxy(target, {
 			get(inner, key, receiver) {
 				const value = Reflect.get(inner, key, receiver);
-				return value !== null && typeof value === 'object' && !(value instanceof Date)
+				return value !== null &&
+					typeof value === 'object' &&
+					!(value instanceof Date)
 					? Drafts.json(owner, value, column)
 					: value;
 			},
 			// An array's `push` sets the index and then a `length` it already has: the same value is no edit.
 			set: (inner, key, value) => {
-				const same = key in inner && Object.is(Reflect.get(inner, key), value);
+				const same =
+					key in inner && Object.is(Reflect.get(inner, key), value);
 				return Reflect.set(inner, key, value) && (same || noted());
 			},
-			deleteProperty: (inner, key) => Reflect.deleteProperty(inner, key) && noted(),
+			deleteProperty: (inner, key) =>
+				Reflect.deleteProperty(inner, key) && noted(),
 			defineProperty: (inner, key, descriptor) =>
 				Reflect.defineProperty(inner, key, descriptor) && noted(),
 		});

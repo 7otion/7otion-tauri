@@ -48,7 +48,9 @@ export class RowFinder<M extends Model> {
 		return this.lookUp(values, tx, (found, patch, inner) =>
 			found.update(
 				Object.fromEntries(
-					Object.entries(patch).filter(([column]) => table.fillable(column)),
+					Object.entries(patch).filter(([column]) =>
+						table.fillable(column),
+					),
 				) as Patch<M>,
 				inner,
 			),
@@ -62,7 +64,11 @@ export class RowFinder<M extends Model> {
 	private lookUp(
 		values: Patch<M> | Transaction,
 		tx: Transaction | undefined,
-		whenFound: (found: M, patch: Patch<M>, tx: Transaction) => M | Promise<M>,
+		whenFound: (
+			found: M,
+			patch: Patch<M>,
+			tx: Transaction,
+		) => M | Promise<M>,
 	): Promise<M> {
 		// `firstOrCreate(attributes, tx)` puts the transaction where the values go. TypeScript
 		// cannot tell the two apart (both have an `id`), so it is checked here.
@@ -75,19 +81,26 @@ export class RowFinder<M extends Model> {
 		}
 		const staged = created.$attributes.draftValues();
 		const lookup = Object.fromEntries(
-			Object.keys(this.attributes).map(column => [column, staged[column]]),
+			Object.keys(this.attributes).map(column => [
+				column,
+				staged[column],
+			]),
 		);
 
-		return WriteLifecycle.transaction(this.modelClass.database, handle, async inner => {
-			const found = await this.modelClass
-				.query()
-				.whereAttributes(lookup as Partial<ColumnsOf<M>>)
-				.first(inner);
-			if (found) return whenFound(found, patch, inner);
+		return WriteLifecycle.transaction(
+			this.modelClass.database,
+			handle,
+			async inner => {
+				const found = await this.modelClass
+					.query()
+					.whereAttributes(lookup as Partial<ColumnsOf<M>>)
+					.first(inner);
+				if (found) return whenFound(found, patch, inner);
 
-			created.fill(patch);
-			await created.save(inner);
-			return created;
-		});
+				created.fill(patch);
+				await created.save(inner);
+				return created;
+			},
+		);
 	}
 }

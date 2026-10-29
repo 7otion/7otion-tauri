@@ -87,7 +87,9 @@ export class DateCodec implements Codec<Date, string | number> {
 
 	accept(value: unknown, column: string): Date {
 		if (typeof value !== 'number') return value as Date;
-		const date = new Date(this.storage === 'unix_ms' ? value : value * 1000);
+		const date = new Date(
+			this.storage === 'unix_ms' ? value : value * 1000,
+		);
 		if (Number.isNaN(date.getTime())) {
 			throw new OrmError(
 				`[orm] Column ${JSON.stringify(column)} is a date, and ${value} is not a date.`,

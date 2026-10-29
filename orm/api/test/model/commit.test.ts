@@ -27,7 +27,10 @@ describe('what a commit tells Svelte', () => {
 		const ann = await User.create({ name: 'Ann' });
 		const post = await Post.create({ title: 'Hello' });
 		const order: string[] = [];
-		User.registerEvent('update:committed', () => void order.push('handler'));
+		User.registerEvent(
+			'update:committed',
+			() => void order.push('handler'),
+		);
 		new Watch(() => order.push(`shown ${ann.name} ${post.title}`));
 		order.length = 0;
 
@@ -45,7 +48,9 @@ describe('what a commit tells Svelte', () => {
 		const ann = await User.create({ name: 'Ann' });
 		await User.create({ name: 'Bob' });
 		const users = await User.query().orderBy('name').get();
-		const shown = new Watch(() => `${ann.name}: ${users.pluck('name').join()}`);
+		const shown = new Watch(
+			() => `${ann.name}: ${users.pluck('name').join()}`,
+		);
 
 		await ann.update({ name: 'Cy' });
 
@@ -98,7 +103,9 @@ describe('what a commit tells Svelte', () => {
 		let release!: () => void;
 		const uploading = new Promise<void>(resolve => (release = resolve));
 		let started!: () => void;
-		const handlerStarted = new Promise<void>(resolve => (started = resolve));
+		const handlerStarted = new Promise<void>(
+			resolve => (started = resolve),
+		);
 		Post.registerEvent('create:committed', async () => {
 			started();
 			await uploading;

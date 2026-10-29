@@ -37,7 +37,9 @@ export class StatementLogger {
 		if (result.affected > 0) console.log(`affected ${result.affected}`);
 		if (result.rows.length > 0) {
 			console.log(StatementLogger.counted(result.rows.length, 'row'));
-			console.log(result.rows.slice(0, MAX_ROWS).map(StatementLogger.row));
+			console.log(
+				result.rows.slice(0, MAX_ROWS).map(StatementLogger.row),
+			);
 			if (result.rows.length > MAX_ROWS) {
 				console.log(`…and ${result.rows.length - MAX_ROWS} more rows`);
 			}
@@ -50,7 +52,10 @@ export class StatementLogger {
 	/** Four parts that add up to the total: SQLite, the wait for a connection, the plugin around them, and the page: the bridge and any wait for the main thread. */
 	private static breakdown(timing: Timing, total: number): string {
 		const ms = StatementLogger.ms;
-		const plugin = Math.max(0, timing.pluginMs - timing.ranMs - timing.waitedMs);
+		const plugin = Math.max(
+			0,
+			timing.pluginMs - timing.ranMs - timing.waitedMs,
+		);
 		const render = Math.max(0, total - timing.pluginMs);
 		return `db ${ms(timing.ranMs)} · wait ${ms(timing.waitedMs)} · plugin ${ms(plugin)} · render ${ms(render)} · total ${ms(total)}`;
 	}

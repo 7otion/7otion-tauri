@@ -195,12 +195,20 @@ export async function usage(): Promise<void> {
 		}
 	});
 	Book.registerEvent('save:before', async (written, tx) => {
-		await Chapter.query().whereIn('book_id', written.map(([b]) => b.id)).count(tx);
+		await Chapter.query()
+			.whereIn(
+				'book_id',
+				written.map(([b]) => b.id),
+			)
+			.count(tx);
 	});
 	Book.registerEvent('save:committed', null);
 	Model.registerEvent('delete:committed', written => void written.length);
 	// @ts-expect-error a :committed handler runs after the transaction and gets no tx
-	Book.registerEvent('save:committed', (_written, tx: Transaction) => void tx);
+	Book.registerEvent(
+		'save:committed',
+		(_written, tx: Transaction) => void tx,
+	);
 	// @ts-expect-error not an event
 	Book.registerEvent('saving', () => {});
 
@@ -239,7 +247,8 @@ export async function usage(): Promise<void> {
 	(query: ModelQuery<Book>) => query.where('price', 999);
 	// @ts-expect-error the model's columns are still checked through the annotation
 	(query: ModelQuery<Book>) => query.where('nope', 1);
-	const cheap = <R>(query: ModelQuery<Book, R>) => query.where('in_print', true);
+	const cheap = <R>(query: ModelQuery<Book, R>) =>
+		query.where('in_print', true);
 	// @ts-expect-error a helper generic over R keeps the relation paths checked
 	cheap(Book.query()).with('nope');
 	// @ts-expect-error a query starts from Model.query(), never from a constructor
@@ -248,7 +257,12 @@ export async function usage(): Promise<void> {
 	void [created, pages, books, author, chapters];
 }
 
-import { ConnectionStore, Store, type Query, type Stored } from '@7otion-tauri/orm';
+import {
+	ConnectionStore,
+	Store,
+	type Query,
+	type Stored,
+} from '@7otion-tauri/orm';
 
 class Shelf extends ConnectionStore {
 	readonly books = this.query(() => Book.query().orderBy('title'));

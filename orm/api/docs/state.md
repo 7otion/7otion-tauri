@@ -15,7 +15,9 @@ export class Library extends ConnectionStore {
 	});
 	readonly files = this.query(() => {
 		const all = File.query().orderBy('created_at');
-		return this.search ? all.where('name', 'LIKE', `%${this.search}%`) : all;
+		return this.search
+			? all.where('name', 'LIKE', `%${this.search}%`)
+			: all;
 	});
 	readonly filesByOwner = $derived(this.files.collection.groupBy('owner_id'));
 }
@@ -38,13 +40,13 @@ Stores are never created with `new`. `Library.get()` creates one on first call
 and returns the same one afterwards. Actions are plain methods. A store can use
 another one with `Other.get()`.
 
-| field                                | what it is                                       |
-| ------------------------------------ | ------------------------------------------------ |
-| `$state(initial)`                    | a value you write                                |
-| `$derived(expression)`               | a value computed from others                     |
-| `this.stored(key, initial)`          | a value kept in `localStorage`                   |
-| `this.query(() => Model.query()…)`   | a live query                                     |
-| `this.counted(() => Model.query()…)` | a live row count                                 |
+| field                                | what it is                     |
+| ------------------------------------ | ------------------------------ |
+| `$state(initial)`                    | a value you write              |
+| `$derived(expression)`               | a value computed from others   |
+| `this.stored(key, initial)`          | a value kept in `localStorage` |
+| `this.query(() => Model.query()…)`   | a live query                   |
+| `this.counted(() => Model.query()…)` | a live row count               |
 
 ### Two stores that use each other
 
@@ -107,7 +109,9 @@ class Library extends ConnectionStore {
 	}
 
 	readonly entries = this.query(() =>
-		this.matching().limit(this.#perPage).offset((this.page - 1) * this.#perPage),
+		this.matching()
+			.limit(this.#perPage)
+			.offset((this.page - 1) * this.#perPage),
 	);
 	readonly total = this.counted(() => this.matching());
 	readonly pages = $derived(Math.ceil(this.total.current / this.#perPage));
@@ -144,11 +148,11 @@ constructor() {
 
 ## How long a store lives
 
-| extends           | lives                                         |
-| ----------------- | --------------------------------------------- |
-| `Store`           | for the whole app                             |
-| `ConnectionStore` | while the current database stays connected    |
-| `TabStore`        | while its `TabScope` (one tab) is open        |
+| extends           | lives                                      |
+| ----------------- | ------------------------------------------ |
+| `Store`           | for the whole app                          |
+| `ConnectionStore` | while the current database stays connected |
+| `TabStore`        | while its `TabScope` (one tab) is open     |
 
 Connecting another database or calling `Model.disconnect()` ends every
 connection store, and the next `get()` creates fresh ones for the new database.

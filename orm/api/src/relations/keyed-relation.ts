@@ -11,7 +11,12 @@ import type { SelectBuilder } from '../sql/select';
 import { SqlWriter } from '../sql/sql-writer';
 import { KeyIndex } from './key-index';
 import { LiveRelation, type Reach } from './live-relation';
-import type { AnyRelation, Deliver, EagerConstraint, Existence } from './relation';
+import type {
+	AnyRelation,
+	Deliver,
+	EagerConstraint,
+	Existence,
+} from './relation';
 
 export type KeyColumns = string | readonly string[];
 
@@ -58,7 +63,10 @@ export abstract class KeyedRelation<
 		constraint: EagerConstraint | undefined,
 	): readonly string[] | null {
 		const { relatedColumns } = this.matching;
-		const deciding = this.shaped(name, constraint).builder.decidingColumns();
+		const deciding = this.shaped(
+			name,
+			constraint,
+		).builder.decidingColumns();
 		return deciding === null ? null : [...relatedColumns, ...deciding];
 	}
 
@@ -66,7 +74,10 @@ export abstract class KeyedRelation<
 		return this.shaped(name, constraint).builder.hasLimitOrOffset;
 	}
 
-	protected shaped(name: string, constraint: EagerConstraint | undefined): ModelQuery<R> {
+	protected shaped(
+		name: string,
+		constraint: EagerConstraint | undefined,
+	): ModelQuery<R> {
 		return this.scope(
 			ModelQuery.forLoad(
 				this.relatedClass(),
@@ -81,8 +92,14 @@ export abstract class KeyedRelation<
 		return [this.relatedClass()];
 	}
 
-	others(name: string, constraint: EagerConstraint | undefined): readonly Decider[] {
-		return this.shaped(name, constraint).builder.conditions.others() as Decider[];
+	others(
+		name: string,
+		constraint: EagerConstraint | undefined,
+	): readonly Decider[] {
+		return this.shaped(
+			name,
+			constraint,
+		).builder.conditions.others() as Decider[];
 	}
 
 	version(name: string, constraint?: EagerConstraint): number {
@@ -114,7 +131,8 @@ export abstract class KeyedRelation<
 			others: [
 				{
 					modelClass: this.relatedClass(),
-					columns: filter === null ? null : [...relatedColumns, ...filter],
+					columns:
+						filter === null ? null : [...relatedColumns, ...filter],
 				},
 				...(shaped.conditions.others() as Decider[]),
 			],
@@ -151,10 +169,16 @@ export abstract class KeyedRelation<
 	reach(entry: Entry): Reach {
 		const { relatedColumns } = this.matching;
 		const { table } = this.relatedClass();
-		const changes = entry.changes as Record<string, { from: unknown } | undefined>;
+		const changes = entry.changes as Record<
+			string,
+			{ from: unknown } | undefined
+		>;
 		const now = KeyedRelation.valuesOf(entry.model, relatedColumns);
 		const keys = [table.signature(relatedColumns, now)];
-		if (entry.kind === 'updated' && relatedColumns.some(column => changes[column])) {
+		if (
+			entry.kind === 'updated' &&
+			relatedColumns.some(column => changes[column])
+		) {
 			keys.push(
 				table.signature(
 					relatedColumns,
@@ -165,19 +189,26 @@ export abstract class KeyedRelation<
 			);
 		}
 		return {
-			keys: [...new Set(keys.filter((key): key is string => key !== null))],
+			keys: [
+				...new Set(keys.filter((key): key is string => key !== null)),
+			],
 			asks: false,
 		};
 	}
 
 	/** How `parent`'s value asks for its rows again, loading this one parent as it was loaded. */
-	sourceFor(parent: Model, name: string, constraint?: EagerConstraint): Source<R> {
+	sourceFor(
+		parent: Model,
+		name: string,
+		constraint?: EagerConstraint,
+	): Source<R> {
 		const { many } = this.matching;
 		return LiveRelation.of(this, name, constraint).sourceFor(parent, {
 			unique: !many && this.keyedByPrimary,
-			matches: constraint || many
-				? undefined
-				: row => this.accepts(row) && this.sameKey(parent, row),
+			matches:
+				constraint || many
+					? undefined
+					: row => this.accepts(row) && this.sameKey(parent, row),
 		});
 	}
 
@@ -194,11 +225,15 @@ export abstract class KeyedRelation<
 	/** The row in the identity map `parent` points at; undefined when the map cannot say. */
 	fromMap(parent: Model, constraint?: EagerConstraint): R | null | undefined {
 		const related = this.relatedClass();
-		if (constraint || this.matching.many || !this.keyedByPrimary) return undefined;
+		if (constraint || this.matching.many || !this.keyedByPrimary)
+			return undefined;
 
 		const wanted = this.keyOf(parent);
 		if (wanted === null) return null;
-		const held = IdentityMap.of(related.database).get(related, wanted.signature);
+		const held = IdentityMap.of(related.database).get(
+			related,
+			wanted.signature,
+		);
 		return held && this.accepts(held) ? held : undefined;
 	}
 
@@ -214,14 +249,24 @@ export abstract class KeyedRelation<
 	}
 
 	/** `parent`'s key as the related side stores and signs it; null when unset. */
-	private keyOf(parent: Model): { signature: string; translated: unknown[] } | null {
+	private keyOf(
+		parent: Model,
+	): { signature: string; translated: unknown[] } | null {
 		const { parentColumns, relatedColumns } = this.matching;
 		const values = KeyedRelation.valuesOf(parent, parentColumns);
-		if (this.parentClass.table.signature(parentColumns, values) === null) return null;
+		if (this.parentClass.table.signature(parentColumns, values) === null)
+			return null;
 
 		// Signed as the related side stores it, which is how the rows found are signed.
-		const translated = this.translate(parentColumns, relatedColumns, values);
-		const signature = this.relatedClass().table.signature(relatedColumns, translated);
+		const translated = this.translate(
+			parentColumns,
+			relatedColumns,
+			values,
+		);
+		const signature = this.relatedClass().table.signature(
+			relatedColumns,
+			translated,
+		);
 		return signature === null ? null : { signature, translated };
 	}
 

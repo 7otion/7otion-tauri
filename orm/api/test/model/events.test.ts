@@ -1,10 +1,6 @@
 import { describe, expect, test } from 'bun:test';
 
-import {
-	AfterCommitError,
-	OrmError,
-	TransactionError,
-} from '../../src/errors';
+import { AfterCommitError, OrmError, TransactionError } from '../../src/errors';
 import { Statement } from '../../src/database/statement';
 import type { ModelEvent, ModelEvents } from '../../src/events/events';
 import type { Written } from '../../src/model/types';
@@ -77,10 +73,18 @@ describe('model events', () => {
 	test('a clean save fires nothing, and deleting a row already gone runs delete:before only', async () => {
 		const db = await orm.open();
 		const user = await User.create({ name: 'Ann' });
-		await db.run(new Statement('DELETE FROM users WHERE id = ?', [user.id]));
+		await db.run(
+			new Statement('DELETE FROM users WHERE id = ?', [user.id]),
+		);
 
 		const seen: string[] = [];
-		log(seen, 'save:before', 'save:committed', 'delete:before', 'delete:committed');
+		log(
+			seen,
+			'save:before',
+			'save:committed',
+			'delete:before',
+			'delete:committed',
+		);
 
 		await (await User.create({ name: 'Bob' })).save();
 		expect(seen.splice(0)).toEqual(['save:before', 'save:committed']);
@@ -120,7 +124,10 @@ describe('model events', () => {
 		Post.registerEvent('create:after', async (written, tx) => {
 			const [post] = written[0]!;
 			expect(await Post.find(post!.id, tx)).not.toBeNull();
-			await Comment.create({ post_id: post!.id, body: 'first', sort: 0 }, tx);
+			await Comment.create(
+				{ post_id: post!.id, body: 'first', sort: 0 },
+				tx,
+			);
 			if (post!.title === 'bad') throw new Error('refused');
 		});
 
@@ -245,7 +252,10 @@ describe('model events', () => {
 				'Anna',
 				{
 					name: { from: 'Ann', to: 'Anna' },
-					updated_at: { from: expect.any(Date), to: expect.any(Date) },
+					updated_at: {
+						from: expect.any(Date),
+						to: expect.any(Date),
+					},
 				},
 				false,
 			],
@@ -267,7 +277,10 @@ describe('model events', () => {
 
 		expect(seen).toEqual([
 			['name'],
-			[{ from: undefined, to: 'Ann' }, { from: undefined, to: 1 }],
+			[
+				{ from: undefined, to: 'Ann' },
+				{ from: undefined, to: 1 },
+			],
 		]);
 	});
 
@@ -276,11 +289,13 @@ describe('model events', () => {
 		const heard: string[] = [];
 		Model.registerEvent(
 			'save:committed',
-			written => void heard.push(`Model ${written[0]![0].constructor.name}`),
+			written =>
+				void heard.push(`Model ${written[0]![0].constructor.name}`),
 		);
 		User.registerEvent(
 			'save:committed',
-			written => void heard.push(`User ${written[0]![0].constructor.name}`),
+			written =>
+				void heard.push(`User ${written[0]![0].constructor.name}`),
 		);
 
 		await User.create({ name: 'Ann' });
@@ -321,8 +336,9 @@ describe('model events', () => {
 		}
 
 		await Page.create({ ref: 'a' });
-		Page.registerEvent('create:committed', written =>
-			void seen.push(`registered ${written[0]![0].ref}`),
+		Page.registerEvent(
+			'create:committed',
+			written => void seen.push(`registered ${written[0]![0].ref}`),
 		);
 		await Page.create({ ref: 'b' });
 		Page.registerEvent('create:committed', null);
@@ -394,7 +410,8 @@ describe('model events', () => {
 		User.registerEvent('update:committed', written => {
 			seen.push(
 				...written.map(
-					([user, changes]) => `${changes.age?.from}→${user.age} ${user.name}`,
+					([user, changes]) =>
+						`${changes.age?.from}→${user.age} ${user.name}`,
 				),
 			);
 		});
@@ -414,7 +431,9 @@ describe('model events', () => {
 		const gone: [string, boolean][] = [];
 		User.registerEvent('delete:committed', written => {
 			gone.push(
-				...written.map(([user]) => [user.name, user.exists] as [string, boolean]),
+				...written.map(
+					([user]) => [user.name, user.exists] as [string, boolean],
+				),
 			);
 		});
 
@@ -500,7 +519,10 @@ describe('model events', () => {
 		log(seen, 'create:committed');
 
 		const creating = User.create({ name: 'Ann' });
-		User.registerEvent('create:after', () => void seen.push('create:after'));
+		User.registerEvent(
+			'create:after',
+			() => void seen.push('create:after'),
+		);
 		await creating;
 
 		expect(seen).toEqual(['create:committed']);

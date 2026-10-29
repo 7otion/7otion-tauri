@@ -59,7 +59,9 @@ export class BelongsToMany<R extends Model, RC = unknown> extends KeyedRelation<
 
 	private get pivotTable(): string {
 		const { pivot } = this.keys;
-		return typeof pivot === 'string' ? pivot : this.pivotClass()!.table.name;
+		return typeof pivot === 'string'
+			? pivot
+			: this.pivotClass()!.table.name;
 	}
 
 	override classes(): readonly ModelClass<any>[] {
@@ -104,7 +106,13 @@ export class BelongsToMany<R extends Model, RC = unknown> extends KeyedRelation<
 		);
 		return {
 			subquery: links.matching(
-				links.conditions.exists('and', false, linked, [relatedPivotKey], []),
+				links.conditions.exists(
+					'and',
+					false,
+					linked,
+					[relatedPivotKey],
+					[],
+				),
 			),
 			columns: [this.parentKey],
 			others,
@@ -115,7 +123,11 @@ export class BelongsToMany<R extends Model, RC = unknown> extends KeyedRelation<
 		const table = this.parentClass.table;
 		return table.storedSignature(
 			[this.parentKey],
-			[table.column(this.parentKey).encode(parent.$attributes.get(this.parentKey))],
+			[
+				table
+					.column(this.parentKey)
+					.encode(parent.$attributes.get(this.parentKey)),
+			],
 		);
 	}
 
@@ -126,7 +138,10 @@ export class BelongsToMany<R extends Model, RC = unknown> extends KeyedRelation<
 		}
 
 		const { foreignPivotKey, relatedPivotKey } = this.keys;
-		const changes = entry.changes as Record<string, { from: unknown } | undefined>;
+		const changes = entry.changes as Record<
+			string,
+			{ from: unknown } | undefined
+		>;
 		if (
 			entry.kind === 'updated' &&
 			!changes[foreignPivotKey] &&
@@ -146,7 +161,9 @@ export class BelongsToMany<R extends Model, RC = unknown> extends KeyedRelation<
 			),
 		);
 		return {
-			keys: [...new Set(keys.filter((key): key is string => key !== null))],
+			keys: [
+				...new Set(keys.filter((key): key is string => key !== null)),
+			],
 			asks: true,
 		};
 	}

@@ -25,28 +25,39 @@ export class QueryWriter<M extends Model> {
 		if (Object.keys(values).length === 0) return 0;
 
 		const matching = this.matched('update');
-		return WriteLifecycle.transaction(this.modelClass.database, tx, async inner => {
-			const models = await this.query.withoutSelection().getArray(inner);
-			return new ModelUpdate(this.modelClass, { values: () => values, matching }).write(
-				models,
-				inner,
-				() => models.length,
-			);
-		});
+		return WriteLifecycle.transaction(
+			this.modelClass.database,
+			tx,
+			async inner => {
+				const models = await this.query
+					.withoutSelection()
+					.getArray(inner);
+				return new ModelUpdate(this.modelClass, {
+					values: () => values,
+					matching,
+				}).write(models, inner, () => models.length);
+			},
+		);
 	}
 
 	/** The matched rows are read first, in the write's transaction, so every instance and collection shows they are gone. */
 	async delete(tx?: Transaction): Promise<number> {
 		this.matched('delete');
 
-		return WriteLifecycle.transaction(this.modelClass.database, tx, async inner => {
-			const models = await this.query.withoutSelection().getArray(inner);
-			return new ModelDelete(this.modelClass).write(
-				models,
-				inner,
-				removed => removed.length,
-			);
-		});
+		return WriteLifecycle.transaction(
+			this.modelClass.database,
+			tx,
+			async inner => {
+				const models = await this.query
+					.withoutSelection()
+					.getArray(inner);
+				return new ModelDelete(this.modelClass).write(
+					models,
+					inner,
+					removed => removed.length,
+				);
+			},
+		);
 	}
 
 	private writable(patch: UpdatePatch<M>): Record<string, unknown> {

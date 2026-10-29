@@ -38,7 +38,9 @@ export default defineConfig({
 		sveltekit({
 			compilerOptions: {
 				runes: ({ filename }) =>
-					filename.split(/[/\\]/).includes('node_modules') ? undefined : true,
+					filename.split(/[/\\]/).includes('node_modules')
+						? undefined
+						: true,
 			},
 			adapter: adapter({ fallback: 'index.html' }),
 			alias: {
@@ -145,14 +147,14 @@ Grant the plugin's commands in your capability:
 The ORM does not read the schema, so each model declares columns matching its
 migration:
 
-| migration (Rust)                         | model (TypeScript)                           |
-| ---------------------------------------- | -------------------------------------------- |
-| `table.id()`                             | `Column.integer().primary().generated()`     |
-| `table.integer` / `real` / `text` / `blob` | `Column.integer()` / `real()` / `text()` / `blob()` |
-| `table.boolean`                          | `Column.boolean()`                           |
-| `table.json`                             | `Column.json<T>()`                           |
-| `table.date("n", DateStorage::Unix)`     | `Column.date('unix')` (same for `iso`, `datetime`, `unix_ms`) |
-| `.nullable()`                            | `.nullable()`                                |
+| migration (Rust)                           | model (TypeScript)                                            |
+| ------------------------------------------ | ------------------------------------------------------------- |
+| `table.id()`                               | `Column.integer().primary().generated()`                      |
+| `table.integer` / `real` / `text` / `blob` | `Column.integer()` / `real()` / `text()` / `blob()`           |
+| `table.boolean`                            | `Column.boolean()`                                            |
+| `table.json`                               | `Column.json<T>()`                                            |
+| `table.date("n", DateStorage::Unix)`       | `Column.date('unix')` (same for `iso`, `datetime`, `unix_ms`) |
+| `.nullable()`                              | `.nullable()`                                                 |
 
 ```ts
 // src/lib/models/note.ts

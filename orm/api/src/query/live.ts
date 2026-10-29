@@ -41,7 +41,8 @@ export class LiveRegistry {
 	/** Registers `live`, read when `version(live.modelClass)` was `seen`, asking again if a commit was put right meanwhile. */
 	follow(live: Live, seen: number): void {
 		this.add(live);
-		if (this.version(live.modelClass) !== seen) void this.turn(() => live.refetch());
+		if (this.version(live.modelClass) !== seen)
+			void this.turn(() => live.refetch());
 	}
 
 	/**

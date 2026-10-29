@@ -54,7 +54,9 @@ describe('a stored value', () => {
 	test('falls back to the initial value when the stored one is refused or is not JSON', () => {
 		storage.setItem('view', '"table"');
 		const isView = (value: unknown) => value === 'grid' || value === 'list';
-		expect(new Stored('view', 'grid', { validate: isView }).current).toBe('grid');
+		expect(new Stored('view', 'grid', { validate: isView }).current).toBe(
+			'grid',
+		);
 
 		storage.setItem('view', 'not json');
 		expect(new Stored('view', 'grid').current).toBe('grid');

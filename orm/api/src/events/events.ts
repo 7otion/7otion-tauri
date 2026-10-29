@@ -14,7 +14,11 @@ export const UPDATE_VERBS: readonly EventVerb[] = ['save', 'update'];
 export const DELETE_VERBS: readonly EventVerb[] = ['delete'];
 
 export const IN_WRITE: readonly EventMoment[] = ['before', 'after'];
-export const ANY_MOMENT: readonly EventMoment[] = ['before', 'after', 'committed'];
+export const ANY_MOMENT: readonly EventMoment[] = [
+	'before',
+	'after',
+	'committed',
+];
 
 const EVENTS: ReadonlySet<string> = new Set(
 	(['create', 'update', 'delete', 'save'] as const).flatMap(verb =>
@@ -28,9 +32,10 @@ export type WriteHandler<M> = (written: Written<M>, tx: Transaction) => unknown;
 /** Runs after the outermost commit; never on rollback. What it returns is awaited, then ignored. */
 export type CommitHandler<M> = (written: Written<M>) => unknown;
 
-export type EventHandler<M, E extends ModelEvent> = E extends `${string}:committed`
-	? CommitHandler<M>
-	: WriteHandler<M>;
+export type EventHandler<
+	M,
+	E extends ModelEvent,
+> = E extends `${string}:committed` ? CommitHandler<M> : WriteHandler<M>;
 
 export type ModelEvents<M> = {
 	readonly [E in ModelEvent]?: EventHandler<M, E>;

@@ -8,11 +8,15 @@ import type { Table, TableDefinition } from '../schema/table';
 import type { Model } from './model';
 
 export type InferColumns<C> = {
-	-readonly [K in keyof C]: C[K] extends Column<infer T, boolean, any> ? T : never;
+	-readonly [K in keyof C]: C[K] extends Column<infer T, boolean, any>
+		? T
+		: never;
 };
 
 export type InferWrites<C> = {
-	-readonly [K in keyof C]: C[K] extends Column<any, boolean, infer W> ? W : never;
+	-readonly [K in keyof C]: C[K] extends Column<any, boolean, infer W>
+		? W
+		: never;
 };
 
 export type KeyColumns<C> = {
@@ -57,7 +61,10 @@ export type ColumnKey<M> = keyof ColumnsOf<M> & string;
 
 /** Columns of one row, each with the value before and after. */
 export type Changes<M> = {
-	readonly [K in ColumnKey<M>]?: { readonly from: ColumnsOf<M>[K]; readonly to: ColumnsOf<M>[K] };
+	readonly [K in ColumnKey<M>]?: {
+		readonly from: ColumnsOf<M>[K];
+		readonly to: ColumnsOf<M>[K];
+	};
 };
 
 /** What a write did, one pair per row: the model, and the columns it carried. A delete carries none. */
@@ -74,7 +81,10 @@ export type OwnedColumns<T> = T extends true
 
 /** What `this.define` returns, and what a model names in `extends Model<typeof Post.schema>`. */
 export type ModelSchema<
-	C extends Record<string, Column<any, boolean>> = Record<string, Column<any, boolean>>,
+	C extends Record<string, Column<any, boolean>> = Record<
+		string,
+		Column<any, boolean>
+	>,
 	T extends TimestampsOption = TimestampsOption,
 > = Omit<TableDefinition<C>, 'timestamps'> & { readonly timestamps?: T };
 
@@ -85,7 +95,9 @@ declare const draftBrand: unique symbol;
  * the model is read; a model does not pass where a draft is asked for.
  */
 export type Draft<M> = M &
-	(M extends { readonly $patch: infer P } ? { -readonly [K in keyof P]: P[K] } : {}) & {
+	(M extends { readonly $patch: infer P }
+		? { -readonly [K in keyof P]: P[K] }
+		: {}) & {
 		model(): M;
 		readonly [draftBrand]: true;
 	};
@@ -96,20 +108,20 @@ export type SchemaInstance<S> = S extends {
 	readonly timestamps?: infer T;
 }
 	? Readonly<InferColumns<C>> & {
-				/** Carries the column types for the query builder; never assigned. */
-				readonly $columns: InferColumns<C>;
-				/** Carries the columns a caller may set; never assigned. */
-				readonly $patch: Omit<InferColumns<C>, OwnedColumns<T>>;
-				readonly $input: Omit<InferWrites<C>, OwnedColumns<T>>;
-				/** Carries the primary key's type and columns; never assigned. */
-				readonly $key: PrimaryKeyFromColumns<C>;
-				readonly $keyColumns: KeyColumns<C>;
-				/** The same `fill`, typed by these columns: a model's own methods cannot resolve `this`. */
-				fill<X>(
-					this: X,
-					data: Partial<Omit<InferWrites<C>, OwnedColumns<T>>>,
-				): X;
-			}
+			/** Carries the column types for the query builder; never assigned. */
+			readonly $columns: InferColumns<C>;
+			/** Carries the columns a caller may set; never assigned. */
+			readonly $patch: Omit<InferColumns<C>, OwnedColumns<T>>;
+			readonly $input: Omit<InferWrites<C>, OwnedColumns<T>>;
+			/** Carries the primary key's type and columns; never assigned. */
+			readonly $key: PrimaryKeyFromColumns<C>;
+			readonly $keyColumns: KeyColumns<C>;
+			/** The same `fill`, typed by these columns: a model's own methods cannot resolve `this`. */
+			fill<X>(
+				this: X,
+				data: Partial<Omit<InferWrites<C>, OwnedColumns<T>>>,
+			): X;
+		}
 	: {};
 
 /** Per column, what an assigned value becomes. It receives the draft; a column assigned on it inside is set as given, past its own mutator. */
@@ -183,7 +195,9 @@ export type HeadOf<P extends string> = P extends `${infer Head}.${string}`
 	: P;
 
 export type ToManyKey<M> = {
-	[K in DeclaredKey<M>]-?: [NonNullable<M[K]>] extends [CollectionLike<ModelLike>]
+	[K in DeclaredKey<M>]-?: [NonNullable<M[K]>] extends [
+		CollectionLike<ModelLike>,
+	]
 		? K
 		: never;
 }[DeclaredKey<M>] &

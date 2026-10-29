@@ -11,18 +11,24 @@ describe('migrations named at open', () => {
 	test('a database opened under a set has the tables the set makes', async () => {
 		const db = bed.database({ migrations: 'notes' });
 
-		await db.run(new Statement("INSERT INTO notes (body) VALUES ('first')"));
+		await db.run(
+			new Statement("INSERT INTO notes (body) VALUES ('first')"),
+		);
 
 		const { rows } = await db.run(new Statement('SELECT body FROM notes'));
 		expect(rows).toEqual([{ body: 'first' }]);
-		const { rows: applied } = await db.run(new Statement('SELECT name FROM migrations'));
+		const { rows: applied } = await db.run(
+			new Statement('SELECT name FROM migrations'),
+		);
 		expect(applied).toEqual([{ name: 'create_notes' }]);
 	});
 
 	test('a database opened under no set runs nothing', async () => {
 		const db = bed.database();
 
-		const failed = await rejection(db.run(new Statement('SELECT body FROM notes')));
+		const failed = await rejection(
+			db.run(new Statement('SELECT body FROM notes')),
+		);
 		expect(failed).toBeInstanceOf(DatabaseError);
 		expect(failed.message).toMatch(/no such table: notes/);
 	});
@@ -32,7 +38,9 @@ describe('migrations named at open', () => {
 
 		const refused = await rejection(db.run(new Statement('SELECT 1')));
 		expect(refused).toBeInstanceOf(DatabaseError);
-		expect(refused.message).toMatch(/no migrations are registered under "nope"/);
+		expect(refused.message).toMatch(
+			/no migrations are registered under "nope"/,
+		);
 	});
 
 	test('a file open under one set is refused under another, and attaches under none', async () => {
@@ -47,7 +55,9 @@ describe('migrations named at open', () => {
 		);
 
 		const attached = bed.database();
-		const { rows } = await attached.run(new Statement('SELECT name FROM migrations'));
+		const { rows } = await attached.run(
+			new Statement('SELECT name FROM migrations'),
+		);
 		expect(rows).toEqual([{ name: 'create_notes' }]);
 	});
 });

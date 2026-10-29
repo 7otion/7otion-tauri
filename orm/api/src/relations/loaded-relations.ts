@@ -1,6 +1,10 @@
 import type { Transaction } from '../database/transaction';
 import { OrmError } from '../errors';
-import { Collection, LiveCollection, type Source } from '../query/collection.svelte';
+import {
+	Collection,
+	LiveCollection,
+	type Source,
+} from '../query/collection.svelte';
 import { EagerLoader, type EagerPaths } from '../query/eager-loader';
 import { LiveRegistry } from '../query/live';
 import type { Model } from '../model/model';
@@ -73,7 +77,9 @@ export class LoadedRelations {
 			: value;
 		const lookup =
 			followed && !Array.isArray(value)
-				? new LiveLookup(followed, value as Model | null, next => this.follow(name, next))
+				? new LiveLookup(followed, value as Model | null, next =>
+						this.follow(name, next),
+					)
 				: undefined;
 
 		const before: Held = {
@@ -108,8 +114,10 @@ export class LoadedRelations {
 			}
 		});
 		tx.onCommit(`${this.modelClass().name}.${name}`, async () => {
-			if (this.related.get(name) !== before.value) LoadedRelations.release(before);
-			if (!live && this.related.get(name) === held) await this.pointAgain([name]);
+			if (this.related.get(name) !== before.value)
+				LoadedRelations.release(before);
+			if (!live && this.related.get(name) === held)
+				await this.pointAgain([name]);
 		});
 	}
 
@@ -140,14 +148,21 @@ export class LoadedRelations {
 	}
 
 	/** Loads beneath `rows` what `name` was loaded with beneath it: `posts.comments` loads `comments` on posts that joined `posts`. */
-	private async loadBeneath(name: string, rows: readonly Model[]): Promise<void> {
+	private async loadBeneath(
+		name: string,
+		rows: readonly Model[],
+	): Promise<void> {
 		const beneath = new Map<string, EagerConstraint | undefined>();
 		for (const [path, constraint] of this.paths) {
-			if (path.startsWith(`${name}.`)) beneath.set(path.slice(name.length + 1), constraint);
+			if (path.startsWith(`${name}.`))
+				beneath.set(path.slice(name.length + 1), constraint);
 		}
 		const relatedClass = this.modelClass().$relation(name).relatedClass?.();
 		if (beneath.size === 0 || rows.length === 0 || !relatedClass) return;
-		await new EagerLoader(beneath, undefined, true).load(rows, relatedClass);
+		await new EagerLoader(beneath, undefined, true).load(
+			rows,
+			relatedClass,
+		);
 	}
 
 	/** A to-one whose row was deleted reads as null. */
@@ -172,9 +187,12 @@ export class LoadedRelations {
 		const handed = this.promises.get(path);
 		if (handed) return handed;
 
-		const loading: Promise<unknown> = this.loadUntilHeld(path).finally(() => {
-			if (this.promises.get(path) === loading) this.promises.delete(path);
-		});
+		const loading: Promise<unknown> = this.loadUntilHeld(path).finally(
+			() => {
+				if (this.promises.get(path) === loading)
+					this.promises.delete(path);
+			},
+		);
 		this.promises.set(path, loading);
 		return loading;
 	}
@@ -187,7 +205,10 @@ export class LoadedRelations {
 			for (const model of models) {
 				if (!model.$relations.has(name)) return false;
 				const held = model.$relations.held(name);
-				if (!(held instanceof Collection) && (held as Model | null)?.$exists === false) {
+				if (
+					!(held instanceof Collection) &&
+					(held as Model | null)?.$exists === false
+				) {
 					return false;
 				}
 				next.push(...Collection.modelsIn(held));
@@ -219,13 +240,17 @@ export class LoadedRelations {
 	}
 
 	/** After a commit that changed `columns`, the loaded relations keyed off them point again. Returns the relations changed. */
-	followKeys(columns: readonly string[]): Promise<{ model: Model; name: string }[]> {
+	followKeys(
+		columns: readonly string[],
+	): Promise<{ model: Model; name: string }[]> {
 		const relations = this.modelClass().relations;
 		return this.pointAgain(
 			Object.keys(relations).filter(
 				name =>
 					this.related.has(name) &&
-					relations[name]!.ownerColumns().some(column => columns.includes(column)),
+					relations[name]!.ownerColumns().some(column =>
+						columns.includes(column),
+					),
 			),
 		);
 	}
@@ -234,7 +259,9 @@ export class LoadedRelations {
 	 * `names` read again as shared where they hold a transaction's value or the wrong row: a
 	 * to-one from the identity map where it can be. Returns the relations now holding another value.
 	 */
-	private async pointAgain(names: readonly string[]): Promise<{ model: Model; name: string }[]> {
+	private async pointAgain(
+		names: readonly string[],
+	): Promise<{ model: Model; name: string }[]> {
 		const relations = this.modelClass().relations;
 		const changed: { model: Model; name: string }[] = [];
 		const query: string[] = [];
@@ -262,17 +289,28 @@ export class LoadedRelations {
 				continue;
 			}
 			if (found !== held) {
-				this.deliver(name, found, this.startLoad(name), undefined, source);
+				this.deliver(
+					name,
+					found,
+					this.startLoad(name),
+					undefined,
+					source,
+				);
 				if (found) await this.loadBeneath(name, [found]);
 				changed.push({ model: this.model, name });
 			}
 		}
 
 		if (query.length > 0) {
-			const before = new Map(query.map(name => [name, this.related.get(name)]));
-			await Promise.all(query.map(name => this.replay(this.recordedUnder(name))));
+			const before = new Map(
+				query.map(name => [name, this.related.get(name)]),
+			);
+			await Promise.all(
+				query.map(name => this.replay(this.recordedUnder(name))),
+			);
 			for (const name of query) {
-				if (this.related.get(name) !== before.get(name)) changed.push({ model: this.model, name });
+				if (this.related.get(name) !== before.get(name))
+					changed.push({ model: this.model, name });
 			}
 		}
 		return changed;
@@ -285,13 +323,16 @@ export class LoadedRelations {
 		const loading = loader.load([this.model], this.modelClass());
 
 		// Registered like any load, so a load it supersedes waits for it rather than loading again.
-		const heads = new Set([...paths.keys()].map(path => path.split('.')[0]!));
+		const heads = new Set(
+			[...paths.keys()].map(path => path.split('.')[0]!),
+		);
 		for (const head of heads) this.running.set(head, loading);
 		try {
 			await loading;
 		} finally {
 			for (const head of heads) {
-				if (this.running.get(head) === loading) this.running.delete(head);
+				if (this.running.get(head) === loading)
+					this.running.delete(head);
 			}
 		}
 
@@ -347,7 +388,10 @@ export class LoadedRelations {
 		} while (!this.holds(path));
 
 		// A value read before a commit it did not see asks again in a turn; it has answered after this one.
-		if (!tx) await LiveRegistry.of(this.modelClass().database).turn(async () => {});
+		if (!tx)
+			await LiveRegistry.of(this.modelClass().database).turn(
+				async () => {},
+			);
 		return this.read(head);
 	}
 
@@ -370,7 +414,8 @@ export class LoadedRelations {
 	/** The loads on their way for `name` and beneath it are joined by no later call. */
 	private forget(name: string): void {
 		for (const path of [...this.promises.keys()]) {
-			if (path === name || path.startsWith(`${name}.`)) this.promises.delete(path);
+			if (path === name || path.startsWith(`${name}.`))
+				this.promises.delete(path);
 		}
 	}
 

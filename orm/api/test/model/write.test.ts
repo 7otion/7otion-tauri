@@ -117,9 +117,9 @@ describe('writing', () => {
 
 		await user.save();
 		expect(user.settings!.tags).toEqual(['a', 'b']);
-		expect(await User.query().where('id', user.id).pluck('settings')).toEqual([
-			{ theme: 'dark', tags: ['a', 'b'] },
-		]);
+		expect(
+			await User.query().where('id', user.id).pluck('settings'),
+		).toEqual([{ theme: 'dark', tags: ['a', 'b'] }]);
 	});
 
 	test('a committed object value is frozen: an edit in place on the model throws', async () => {
@@ -199,7 +199,11 @@ describe('writing', () => {
 		} as never);
 
 		expect(post.draft().toObject()).toEqual({ title: 'Hello' });
-		expect(comment.draft().toObject()).toEqual({ post_id: 1, body: 'x', sort: 1 });
+		expect(comment.draft().toObject()).toEqual({
+			post_id: 1,
+			body: 'x',
+			sort: 1,
+		});
 	});
 
 	test('fill, create, firstOrCreate and sync run a column’s mutator, and a read does not', async () => {
@@ -215,7 +219,9 @@ describe('writing', () => {
 				},
 			});
 
-			static readonly mutators = this.mutate({ body: value => value.trim() });
+			static readonly mutators = this.mutate({
+				body: value => value.trim(),
+			});
 		}
 		class Thread extends Model<typeof Thread.schema> {
 			static readonly schema = this.define({
@@ -279,7 +285,9 @@ describe('writing', () => {
 		expect(user.exists).toBe(false);
 		expect(await User.find(user.id)).toBeNull();
 
-		await db.run(new Statement('DELETE FROM users WHERE id = ?', [other.id]));
+		await db.run(
+			new Statement('DELETE FROM users WHERE id = ?', [other.id]),
+		);
 		expect(await other.delete()).toBe(false);
 		expect(other.exists).toBe(false);
 	});
@@ -371,8 +379,7 @@ describe('writing', () => {
 		expect(article.summary).toBeNull();
 		expect(article.isDirty).toBe(false);
 		expect(
-			(await db.run(new Statement('SELECT summary FROM articles')))
-				.rows,
+			(await db.run(new Statement('SELECT summary FROM articles'))).rows,
 		).toEqual([{ summary: null }]);
 	});
 

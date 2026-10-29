@@ -1,6 +1,11 @@
 import type { ModelClass } from '../model/types';
 import { Signal } from '../reactivity/signal.svelte';
-import { decidedBy, decidedElsewhere, follows, type Decided } from './collection.svelte';
+import {
+	decidedBy,
+	decidedElsewhere,
+	follows,
+	type Decided,
+} from './collection.svelte';
 import { LiveRegistry, type Entry, type Live } from './live';
 
 export interface ValueSource<T> extends Decided {
@@ -17,7 +22,8 @@ export class LiveValue<T> implements Live {
 	) {
 		const registry = LiveRegistry.of(source.modelClass.database);
 		registry.follow(this, registry.version(source.modelClass));
-		for (const modelClass of follows(source)) registry.add(this, modelClass);
+		for (const modelClass of follows(source))
+			registry.add(this, modelClass);
 	}
 
 	get modelClass(): ModelClass<any> {

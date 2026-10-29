@@ -38,7 +38,9 @@ describe('the draft', () => {
 
 		expect([user.name, user.draft().name]).toEqual(['Ann', 'Annie']);
 		expect([user.age, user.draft().age]).toEqual([30, 30]);
-		expect(user.getPending()).toEqual({ name: { from: 'Ann', to: 'Annie' } });
+		expect(user.getPending()).toEqual({
+			name: { from: 'Ann', to: 'Annie' },
+		});
 	});
 
 	test('save(column) saves only that edit and leaves the rest pending', async () => {
@@ -91,7 +93,10 @@ describe('the draft', () => {
 
 		await article.update({ title: '  Hello World ' });
 
-		expect([article.title, article.slug]).toEqual(['Hello World', 'hello-world']);
+		expect([article.title, article.slug]).toEqual([
+			'Hello World',
+			'hello-world',
+		]);
 		expect(article.isDirty).toBe(false);
 	});
 
@@ -118,7 +123,10 @@ describe('the draft', () => {
 		settings.theme = 'light';
 
 		expect(user.getDirty()).toEqual(['settings']);
-		expect(user.draft().settings).toEqual({ theme: 'light', tags: ['a', 'b'] });
+		expect(user.draft().settings).toEqual({
+			theme: 'light',
+			tags: ['a', 'b'],
+		});
 		expect(user.settings).toEqual({ theme: 'dark', tags: ['a'] });
 		expect(Array.isArray(user.draft().settings!.tags)).toBe(true);
 

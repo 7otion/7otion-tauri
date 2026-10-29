@@ -3,10 +3,10 @@
 Events are named `verb:moment`. The verbs are `create`, `update`, `delete`, and
 `save` (create or update).
 
-| moment       | runs                                  | arguments       | if it throws          |
-| ------------ | ------------------------------------- | --------------- | --------------------- |
-| `:before`    | inside the write, before the statement | `(written, tx)` | the write rolls back  |
-| `:after`     | inside the write, after the statement  | `(written, tx)` | the write rolls back  |
+| moment       | runs                                   | arguments       | if it throws           |
+| ------------ | -------------------------------------- | --------------- | ---------------------- |
+| `:before`    | inside the write, before the statement | `(written, tx)` | the write rolls back   |
+| `:after`     | inside the write, after the statement  | `(written, tx)` | the write rolls back   |
 | `:committed` | after the commit                       | `(written)`     | the write still stands |
 
 ## Declaring

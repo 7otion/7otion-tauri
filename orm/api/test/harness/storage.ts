@@ -16,7 +16,11 @@ class MemoryStorage implements Storage {
 
 	setItem(key: string, value: string): void {
 		this.items.set(key, String(value));
-		Object.defineProperty(this, key, { value: String(value), configurable: true, enumerable: true });
+		Object.defineProperty(this, key, {
+			value: String(value),
+			configurable: true,
+			enumerable: true,
+		});
 	}
 
 	removeItem(key: string): void {
@@ -30,7 +34,10 @@ class MemoryStorage implements Storage {
 }
 
 if (!('localStorage' in globalThis)) {
-	Object.defineProperty(globalThis, 'localStorage', { value: new MemoryStorage(), configurable: true });
+	Object.defineProperty(globalThis, 'localStorage', {
+		value: new MemoryStorage(),
+		configurable: true,
+	});
 }
 
 export const storage: Storage = globalThis.localStorage;

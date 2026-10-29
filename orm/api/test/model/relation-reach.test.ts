@@ -25,7 +25,9 @@ describe('a commit reaches only the loaded relations it concerns', () => {
 		return db;
 	};
 	const selects = (table: string) =>
-		orm.crate.statements.filter(sql => sql.startsWith(`SELECT * FROM \`${table}\``));
+		orm.crate.statements.filter(sql =>
+			sql.startsWith(`SELECT * FROM \`${table}\``),
+		);
 	const watch = <T>(read: () => T): Watch<T> => {
 		const watching = new Watch(read);
 		stops.push(watching.stop);
@@ -34,7 +36,9 @@ describe('a commit reaches only the loaded relations it concerns', () => {
 
 	test('a row created for one parent asks for that parent’s rows alone, in one statement', async () => {
 		await open();
-		const [ann, bob, cy] = (await User.query().with('posts').orderBy('id').get()).toArray();
+		const [ann, bob, cy] = (
+			await User.query().with('posts').orderBy('id').get()
+		).toArray();
 		const bobs = watch(() => bob!.posts.length);
 		const cys = watch(() => cy!.posts.length);
 		orm.crate.calls.length = 0;
@@ -43,14 +47,20 @@ describe('a commit reaches only the loaded relations it concerns', () => {
 
 		expect(ann!.posts.pluck('title')).toEqual(['A1', 'A2', 'A3']);
 		expect(selects('posts')).toHaveLength(1);
-		expect(orm.crate.calls.find(call => call.sql?.startsWith('SELECT * FROM `posts`'))?.params).toEqual([1]);
+		expect(
+			orm.crate.calls.find(call =>
+				call.sql?.startsWith('SELECT * FROM `posts`'),
+			)?.params,
+		).toEqual([1]);
 		expect(bobs.reruns).toBe(0);
 		expect(cys.reruns).toBe(0);
 	});
 
 	test('rows created for several parents in one commit are asked for together', async () => {
 		await open();
-		const [ann, bob, cy] = (await User.query().with('posts').orderBy('id').get()).toArray();
+		const [ann, bob, cy] = (
+			await User.query().with('posts').orderBy('id').get()
+		).toArray();
 		orm.crate.calls.length = 0;
 
 		await Post.createMany([
@@ -78,7 +88,9 @@ describe('a commit reaches only the loaded relations it concerns', () => {
 
 	test('a row re-keyed to another parent asks for both, in one statement', async () => {
 		await open();
-		const [ann, bob, cy] = (await User.query().with('posts').orderBy('id').get()).toArray();
+		const [ann, bob, cy] = (
+			await User.query().with('posts').orderBy('id').get()
+		).toArray();
 		const cys = watch(() => cy!.posts.length);
 		orm.crate.calls.length = 0;
 
@@ -92,7 +104,9 @@ describe('a commit reaches only the loaded relations it concerns', () => {
 
 	test('a deleted row leaves its parent’s list without a query', async () => {
 		await open();
-		const [ann, bob] = (await User.query().with('posts').orderBy('id').get()).toArray();
+		const [ann, bob] = (
+			await User.query().with('posts').orderBy('id').get()
+		).toArray();
 		orm.crate.calls.length = 0;
 
 		await ann!.posts.at(0)!.delete();
@@ -104,10 +118,12 @@ describe('a commit reaches only the loaded relations it concerns', () => {
 
 	test('a relation loaded under a raw constraint asks for every parent, in one statement', async () => {
 		await open();
-		const [ann, bob] = (await User.query()
-			.with({ posts: query => query.whereRaw('title <> ?', ['A2']) })
-			.orderBy('id')
-			.get()).toArray();
+		const [ann, bob] = (
+			await User.query()
+				.with({ posts: query => query.whereRaw('title <> ?', ['A2']) })
+				.orderBy('id')
+				.get()
+		).toArray();
 		orm.crate.calls.length = 0;
 
 		await Post.create({ title: 'B2', user_id: 2 });
@@ -139,12 +155,16 @@ describe('a commit reaches only the loaded relations it concerns', () => {
 
 		expect(users.at(0)!.roles.pluck('name')).toEqual(['admin']);
 		expect(selects('roles')).toHaveLength(0);
-		expect(orm.crate.statements.filter(sql => sql.includes('`user_roles`'))).toHaveLength(0);
+		expect(
+			orm.crate.statements.filter(sql => sql.includes('`user_roles`')),
+		).toHaveLength(0);
 	});
 
 	test('a belongsToMany whose pivot is a model follows the pivot rows written through it', async () => {
 		await open();
-		const [ann, bob] = (await User.query().with('duties').orderBy('id').get()).toArray();
+		const [ann, bob] = (
+			await User.query().with('duties').orderBy('id').get()
+		).toArray();
 		expect(ann!.duties.pluck('name')).toEqual(['admin']);
 		const bobs = watch(() => bob!.duties.length);
 
@@ -158,7 +178,9 @@ describe('a commit reaches only the loaded relations it concerns', () => {
 
 	test('a pivot row moved to another parent moves the related row between their lists', async () => {
 		await open();
-		const [ann, bob] = (await User.query().with('duties').orderBy('id').get()).toArray();
+		const [ann, bob] = (
+			await User.query().with('duties').orderBy('id').get()
+		).toArray();
 
 		const link = (await UserRole.query().where('user_id', 1).first())!;
 		await link.update({ user_id: 2 });
@@ -171,7 +193,11 @@ describe('a commit reaches only the loaded relations it concerns', () => {
 		const db = await open();
 		const ann = (await User.query().with('duties').where('id', 1).first())!;
 
-		await db.run(new Statement('INSERT INTO user_roles (user_id, role_id) VALUES (1, 2)'));
+		await db.run(
+			new Statement(
+				'INSERT INTO user_roles (user_id, role_id) VALUES (1, 2)',
+			),
+		);
 		await Role.create({ name: 'guest' });
 
 		expect(ann.duties.pluck('name')).toEqual(['admin']);
@@ -191,14 +217,19 @@ describe('a commit reaches only the loaded relations it concerns', () => {
 
 		expect(posts.at(2)!.author).toBe(bob);
 		expect(posts.at(0)!.author!.name).toBe('Ann');
-		const asked = orm.crate.calls.filter(call => call.sql?.startsWith('SELECT * FROM `users`'));
+		const asked = orm.crate.calls.filter(call =>
+			call.sql?.startsWith('SELECT * FROM `users`'),
+		);
 		expect(asked).toHaveLength(1);
 		expect(asked[0]!.params).toEqual(['Bob', 2]);
 	});
 
 	test('a row created beneath a nested parent asks for that parent alone', async () => {
 		await open();
-		const users = await User.query().with('posts.comments').orderBy('id').get();
+		const users = await User.query()
+			.with('posts.comments')
+			.orderBy('id')
+			.get();
 		const first = users.at(0)!.posts.at(0)!;
 		const third = users.at(1)!.posts.at(0)!;
 		const thirds = watch(() => third.comments.length);
@@ -222,7 +253,9 @@ describe('a list asked again keeps the relations its rows hold', () => {
 		return db;
 	};
 	const selects = (table: string) =>
-		orm.crate.statements.filter(sql => sql.startsWith(`SELECT * FROM \`${table}\``));
+		orm.crate.statements.filter(sql =>
+			sql.startsWith(`SELECT * FROM \`${table}\``),
+		);
 
 	test('a row that joins the list is loaded; the rows already in it are not loaded again', async () => {
 		await open();
@@ -240,7 +273,11 @@ describe('a list asked again keeps the relations its rows hold', () => {
 		expect(ann.posts).toBe(held);
 		expect(pointed.reruns).toBe(0);
 		expect(selects('posts')).toHaveLength(1);
-		expect(orm.crate.calls.find(call => call.sql?.startsWith('SELECT * FROM `posts`'))?.params).toEqual([dee.id]);
+		expect(
+			orm.crate.calls.find(call =>
+				call.sql?.startsWith('SELECT * FROM `posts`'),
+			)?.params,
+		).toEqual([dee.id]);
 	});
 
 	test('a change that reorders the list asks for no relation again', async () => {

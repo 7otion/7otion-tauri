@@ -125,7 +125,11 @@ export class LiveRelation<R extends Model> implements Live {
 			if (decidedElsewhere(this, entry)) {
 				for (const live of this.everyone()) asked.add(live);
 			}
-			if (!this.relation.classes().some(owned => owned === entry.model.constructor)) {
+			if (
+				!this.relation
+					.classes()
+					.some(owned => owned === entry.model.constructor)
+			) {
 				continue;
 			}
 			const related = entry.model.constructor === this.modelClass;
@@ -156,11 +160,15 @@ export class LiveRelation<R extends Model> implements Live {
 
 	async refetch(): Promise<void> {
 		LiveRelation.raise(
-			await Promise.allSettled(this.everyone().map(live => live.refetch())),
+			await Promise.allSettled(
+				this.everyone().map(live => live.refetch()),
+			),
 		);
 	}
 
-	private static raise(settled: readonly PromiseSettledResult<unknown>[]): void {
+	private static raise(
+		settled: readonly PromiseSettledResult<unknown>[],
+	): void {
 		const reasons = settled
 			.filter(result => result.status === 'rejected')
 			.map(result => result.reason as unknown);
@@ -175,7 +183,11 @@ export class LiveRelation<R extends Model> implements Live {
 		);
 	}
 
-	private join(live: Live, key: string | null, seen: number | undefined): () => void {
+	private join(
+		live: Live,
+		key: string | null,
+		seen: number | undefined,
+	): () => void {
 		if (key !== null) {
 			const place = { key, ref: new WeakRef(live) };
 			let refs = this.members.get(key);
@@ -211,7 +223,9 @@ export class LiveRelation<R extends Model> implements Live {
 	}
 
 	private everyone(): Live[] {
-		return [...this.members.values()].flatMap(refs => LiveRelation.alive(refs));
+		return [...this.members.values()].flatMap(refs =>
+			LiveRelation.alive(refs),
+		);
 	}
 
 	private static alive(refs: ReadonlySet<WeakRef<Live>> | undefined): Live[] {
@@ -244,7 +258,8 @@ export class LiveRelation<R extends Model> implements Live {
 		try {
 			const found = await this.load([...asking.keys()]);
 			for (const [parent, waiting] of asking) {
-				for (const { resolve } of waiting) resolve(found.get(parent) ?? []);
+				for (const { resolve } of waiting)
+					resolve(found.get(parent) ?? []);
 			}
 		} catch (error) {
 			for (const waiting of asking.values()) {
@@ -258,7 +273,9 @@ export class LiveRelation<R extends Model> implements Live {
 		return value === null ? [] : [value as R];
 	}
 
-	private async load(parents: readonly Model[]): Promise<Map<Model, readonly R[]>> {
+	private async load(
+		parents: readonly Model[],
+	): Promise<Map<Model, readonly R[]>> {
 		const found = new Map<Model, readonly R[]>();
 		await this.relation.eagerLoad(
 			parents,

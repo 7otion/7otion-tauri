@@ -71,7 +71,9 @@ export class Throws extends ConnectionStore {
 export class Users extends ConnectionStore {
 	onlyActive = $state(false);
 	readonly all = this.query(() =>
-		this.onlyActive ? User.query().where('active', true).orderBy('name') : User.query().orderBy('name'),
+		this.onlyActive
+			? User.query().where('active', true).orderBy('name')
+			: User.query().orderBy('name'),
 	);
 	readonly names = $derived(this.all.rows.map(user => user.name).join());
 	readonly total = this.counted(() =>

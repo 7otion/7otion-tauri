@@ -73,7 +73,11 @@ export class ModelInsert<M extends Model> {
 		await lifecycle.start(
 			models,
 			models.map(
-				model => [model, ModelInsert.changesTo(model.$attributes.draftValues())] as const,
+				model =>
+					[
+						model,
+						ModelInsert.changesTo(model.$attributes.draftValues()),
+					] as const,
 			),
 		);
 
@@ -100,14 +104,19 @@ export class ModelInsert<M extends Model> {
 		values: Readonly<Record<string, unknown>>,
 	): Changes<M> {
 		return Object.fromEntries(
-			Object.entries(values).map(([column, to]) => [column, { from: undefined, to }]),
+			Object.entries(values).map(([column, to]) => [
+				column,
+				{ from: undefined, to },
+			]),
 		) as Changes<M>;
 	}
 
 	/** How many INSERTs the models need: more than one needs a transaction. */
 	private statements(models: readonly M[]): number {
-		return this.chunks(models, this.modelClass.table.timestamps.insertStamp(new Date()))
-			.length;
+		return this.chunks(
+			models,
+			this.modelClass.table.timestamps.insertStamp(new Date()),
+		).length;
 	}
 
 	/**
@@ -165,7 +174,10 @@ export class ModelInsert<M extends Model> {
 			// What the database filled in, a generated id above all, is written too.
 			return {
 				model,
-				changes: ModelInsert.changesTo<M>({ ...sent[index]!, ...supplied }),
+				changes: ModelInsert.changesTo<M>({
+					...sent[index]!,
+					...supplied,
+				}),
 			};
 		});
 	}
@@ -247,7 +259,11 @@ export class ModelInsert<M extends Model> {
 				chunk.rows.push(row);
 				chunk.sent.push(sent);
 			} else {
-				shapes.set(shape, { models: [model], rows: [row], sent: [sent] });
+				shapes.set(shape, {
+					models: [model],
+					rows: [row],
+					sent: [sent],
+				});
 			}
 		}
 
@@ -306,7 +322,10 @@ export class ModelInsert<M extends Model> {
 		if (models.length === 1) return [rows[0]];
 		const { table } = this.modelClass;
 		const byMatch = new Map(
-			rows.map(row => [this.signatureOf(matching!, table.decode(row)), row]),
+			rows.map(row => [
+				this.signatureOf(matching!, table.decode(row)),
+				row,
+			]),
 		);
 		return models.map(model =>
 			byMatch.get(
@@ -337,7 +356,9 @@ export class ModelInsert<M extends Model> {
 	): readonly string[] | null {
 		if (this.ignoring?.uniqueBy) return this.ignoring.uniqueBy;
 		const { primaryKey } = this.modelClass.table;
-		return primaryKey.generatedIn(values) === null ? primaryKey.columns : null;
+		return primaryKey.generatedIn(values) === null
+			? primaryKey.columns
+			: null;
 	}
 
 	private signatureOf(

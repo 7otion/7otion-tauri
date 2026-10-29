@@ -55,7 +55,10 @@ describe('a date column given a number', () => {
 	test('a unix_ms column takes milliseconds', async () => {
 		await table();
 
-		const stamp = await Stamp.create({ seen_at: SECONDS, seen_ms: AT.getTime() + 250 });
+		const stamp = await Stamp.create({
+			seen_at: SECONDS,
+			seen_ms: AT.getTime() + 250,
+		});
 
 		expect(stamp.seen_ms!.getTime()).toBe(AT.getTime() + 250);
 	});
@@ -63,12 +66,18 @@ describe('a date column given a number', () => {
 	test('a date stored as text takes Unix seconds', async () => {
 		await table();
 
-		const stamp = await Stamp.create({ seen_at: SECONDS, seen_iso: SECONDS });
+		const stamp = await Stamp.create({
+			seen_at: SECONDS,
+			seen_iso: SECONDS,
+		});
 
 		expect(stamp.seen_iso!.getTime()).toBe(AT.getTime());
 		expect(
-			(await orm.bed.database().run(new Statement('SELECT seen_iso FROM stamps'))).rows[0]!
-				.seen_iso,
+			(
+				await orm.bed
+					.database()
+					.run(new Statement('SELECT seen_iso FROM stamps'))
+			).rows[0]!.seen_iso,
 		).toBe(AT.toISOString());
 	});
 
@@ -84,7 +93,8 @@ describe('a date column given a number', () => {
 	test('fill() and an assignment on the draft take a number', async () => {
 		await table();
 		const stamp = new Stamp().fill({ seen_at: SECONDS });
-		(stamp.draft() as unknown as Record<string, unknown>).seen_ms = AT.getTime();
+		(stamp.draft() as unknown as Record<string, unknown>).seen_ms =
+			AT.getTime();
 
 		await stamp.save();
 
@@ -117,6 +127,8 @@ describe('a date column given a number', () => {
 	test('a number that is no date is refused', async () => {
 		await table();
 
-		await expect(Stamp.create({ seen_at: Number.NaN })).rejects.toThrow('not a date');
+		await expect(Stamp.create({ seen_at: Number.NaN })).rejects.toThrow(
+			'not a date',
+		);
 	});
 });

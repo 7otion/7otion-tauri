@@ -51,10 +51,9 @@ describe('relation edges', () => {
 
 		expect(fromPosts).toBe(ann.posts);
 		expect(fromNested).toBe(ann.posts);
-		expect(fromPosts.toArray().map(post => post.$relations.has('comments'))).toEqual([
-			true,
-			true,
-		]);
+		expect(
+			fromPosts.toArray().map(post => post.$relations.has('comments')),
+		).toEqual([true, true]);
 		expect(
 			orm.crate.statements.filter(sql => sql.includes('FROM `posts`')),
 		).toHaveLength(1);
@@ -246,7 +245,9 @@ describe('relation edges', () => {
 
 		const shelves = await Shelf.query().with('volumes').orderBy('a').get();
 
-		expect(shelves.toArray().map(shelf => shelf.volumes.length)).toEqual([0, 1]);
+		expect(shelves.toArray().map(shelf => shelf.volumes.length)).toEqual([
+			0, 1,
+		]);
 	});
 });
 

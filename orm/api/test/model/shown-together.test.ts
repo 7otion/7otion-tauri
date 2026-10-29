@@ -19,7 +19,9 @@ describe('a relation is shown with the commit that moved it', () => {
 		await orm.open();
 		const { bob, post } = await authored();
 		await bob.load('posts');
-		const shown = new Watch(() => `${post.user_id} ${post.author?.name} ${bob.posts.length}`);
+		const shown = new Watch(
+			() => `${post.user_id} ${post.author?.name} ${bob.posts.length}`,
+		);
 
 		await post.update({ user_id: bob.id });
 
@@ -46,7 +48,9 @@ describe('a relation is shown with the commit that moved it', () => {
 		const db = await orm.open();
 		const { ann } = await authored();
 		await ann.load('posts');
-		const shown = new Watch(() => `${ann.name}: ${ann.posts.pluck('title').join()}`);
+		const shown = new Watch(
+			() => `${ann.name}: ${ann.posts.pluck('title').join()}`,
+		);
 
 		await db.transaction(async tx => {
 			await ann.update({ name: 'Annie' }, tx);
@@ -87,7 +91,11 @@ describe('a relation is shown with the commit that moved it', () => {
 	test('a reader of a morphTo alone is told when its target is deleted', async () => {
 		await orm.open();
 		const ann = await User.create({ name: 'Ann' });
-		await Note.create({ target_kind: 'user', target_id: ann.id, body: 'n' });
+		await Note.create({
+			target_kind: 'user',
+			target_id: ann.id,
+			body: 'n',
+		});
 		const note = (await Note.query().with('target').first())!;
 		const has = new Watch(() => note.target !== null);
 

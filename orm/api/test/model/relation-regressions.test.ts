@@ -198,7 +198,10 @@ describe('relation regressions', () => {
 		class Owner extends Model<typeof Owner.schema> {
 			static readonly schema = this.define({
 				table: 'users',
-				columns: { id: Column.integer().primary(), name: Column.text() },
+				columns: {
+					id: Column.integer().primary(),
+					name: Column.text(),
+				},
 			});
 
 			declare memos: Collection<Memo>;
@@ -226,7 +229,9 @@ describe('relation regressions', () => {
 		const ann = (await User.query().with('posts').where('id', 1).first())!;
 		const cy = (await User.find(3))!;
 
-		const result = await cy.sync('posts', ann.posts.rows, { matchOn: ['title'] });
+		const result = await cy.sync('posts', ann.posts.rows, {
+			matchOn: ['title'],
+		});
 
 		expect(result).toEqual({
 			attached: 2,

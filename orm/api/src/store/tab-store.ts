@@ -25,10 +25,16 @@ export abstract class TabStore extends Store {
 	 * The instance of this class for `scope`, made on first ask. Without `scope`: the one of the
 	 * tab store being constructed, else the scope provided above the asking component.
 	 */
-	static override get<S extends Store>(this: StoreClass<S>, scope?: TabScope): S {
-		const within = scope ?? TabStore.constructingIn ?? TabScope.current(this.name);
+	static override get<S extends Store>(
+		this: StoreClass<S>,
+		scope?: TabScope,
+	): S {
+		const within =
+			scope ?? TabStore.constructingIn ?? TabScope.current(this.name);
 		if (!within.isOpen) {
-			throw new StoreError(`[store] ${this.name} lives while its tab is open; the tab has closed.`);
+			throw new StoreError(
+				`[store] ${this.name} lives while its tab is open; the tab has closed.`,
+			);
 		}
 		const previous = TabStore.constructingIn;
 		TabStore.constructingIn = within;
@@ -43,8 +49,12 @@ export abstract class TabStore extends Store {
 	 * The instance of this class, asked for each time the returned function is called rather
 	 * than now, in `scope`; without it, in the scope `get()` would use where this is asked.
 	 */
-	static override lazy<S extends Store>(this: StoreClass<S>, scope?: TabScope): () => S {
-		const within = scope ?? TabStore.constructingIn ?? TabScope.current(this.name);
+	static override lazy<S extends Store>(
+		this: StoreClass<S>,
+		scope?: TabScope,
+	): () => S {
+		const within =
+			scope ?? TabStore.constructingIn ?? TabScope.current(this.name);
 		const Class = this as StoreClass<S> & { get(scope: TabScope): S };
 		return () => Class.get(within);
 	}

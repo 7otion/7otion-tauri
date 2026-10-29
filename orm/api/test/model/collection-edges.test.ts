@@ -15,7 +15,11 @@ const SEED = [
 		(1, 'c1', 2), (1, 'c2', 1), (3, 'c3', 1)`,
 ];
 
-async function publish(title: string, user_id: number | null = null, tx?: Transaction): Promise<Post> {
+async function publish(
+	title: string,
+	user_id: number | null = null,
+	tx?: Transaction,
+): Promise<Post> {
 	const post = new Post().fill({ title, user_id });
 	post.draft().published = true;
 	await post.save(tx);
@@ -42,7 +46,9 @@ describe('collections at their edges', () => {
 
 	test('a later page shifts when a row on an earlier page is deleted', async () => {
 		await open();
-		const { data: second } = await Post.query().orderBy('id').paginate(2, 1);
+		const { data: second } = await Post.query()
+			.orderBy('id')
+			.paginate(2, 1);
 		expect(second.pluck('title')).toEqual(['A2']);
 
 		await (await Post.find(1))!.delete();
@@ -72,9 +78,17 @@ describe('collections at their edges', () => {
 
 		const emails = users.sortBy('email').map(user => user.email);
 
-		expect(emails.filter(email => email !== null)).toEqual(['a@x', 'b@x', 'c@x']);
-		const nulls = emails.map((email, index) => (email === null ? index : -1)).filter(index => index >= 0);
-		expect(nulls).toSatisfy(indices => indices.join() === '0,1' || indices.join() === '3,4');
+		expect(emails.filter(email => email !== null)).toEqual([
+			'a@x',
+			'b@x',
+			'c@x',
+		]);
+		const nulls = emails
+			.map((email, index) => (email === null ? index : -1))
+			.filter(index => index >= 0);
+		expect(nulls).toSatisfy(
+			indices => indices.join() === '0,1' || indices.join() === '3,4',
+		);
 	});
 
 	test('map, filter and sortBy answer with arrays of this moment, which do not follow', async () => {
@@ -101,14 +115,20 @@ describe('collections at their edges', () => {
 		// The posts are read before the create lands; the INSERT lands before the read finishes.
 		crate.invoke = async (command: string, args: unknown) => {
 			const sql = (args as { sql?: string } | undefined)?.sql ?? '';
-			if (creating !== null && sql.startsWith('SELECT * FROM `comments`')) await insertLanded;
+			if (creating !== null && sql.startsWith('SELECT * FROM `comments`'))
+				await insertLanded;
 			const result = await original(command, args);
 			if (sql.startsWith('INSERT')) landed();
-			if (creating === null && sql.startsWith('SELECT * FROM `posts`')) creating = publish('New');
+			if (creating === null && sql.startsWith('SELECT * FROM `posts`'))
+				creating = publish('New');
 			return result;
 		};
 
-		const published = await Post.query().with('comments').where('published', true).orderBy('id').get();
+		const published = await Post.query()
+			.with('comments')
+			.where('published', true)
+			.orderBy('id')
+			.get();
 		await creating;
 		crate.invoke = original;
 
@@ -117,7 +137,11 @@ describe('collections at their edges', () => {
 
 	test('a row deleted while another commit re-reads the list does not come back', async () => {
 		await open();
-		const published = await Post.query().with('comments').where('published', true).orderBy('id').get();
+		const published = await Post.query()
+			.with('comments')
+			.where('published', true)
+			.orderBy('id')
+			.get();
 		const doomed = published.at(0)!;
 		const two = (await Post.find(2))!;
 		two.draft().published = true;
@@ -129,7 +153,8 @@ describe('collections at their edges', () => {
 		// The re-read of the posts lands before the delete; the DELETE lands before the re-read finishes.
 		crate.invoke = async (command: string, args: unknown) => {
 			const sql = (args as { sql?: string } | undefined)?.sql ?? '';
-			if (deleting !== null && sql.startsWith('SELECT * FROM `comments`')) await deleteLanded;
+			if (deleting !== null && sql.startsWith('SELECT * FROM `comments`'))
+				await deleteLanded;
 			const result = await original(command, args);
 			if (sql.startsWith('DELETE')) landed();
 			if (deleting === null && sql.startsWith('SELECT * FROM `posts`')) {
@@ -150,7 +175,10 @@ describe('collections at their edges', () => {
 		const db = await open();
 		const stale = await Post.query().get();
 		Model.connect(db);
-		const fresh = await Post.query().where('published', true).orderBy('id').get();
+		const fresh = await Post.query()
+			.where('published', true)
+			.orderBy('id')
+			.get();
 
 		await publish('New').catch(() => {});
 
@@ -176,7 +204,10 @@ describe('collections at their edges', () => {
 
 	test('a collection released while a commit re-reads it keeps its rows', async () => {
 		await open();
-		const published = await Post.query().where('published', true).orderBy('id').get();
+		const published = await Post.query()
+			.where('published', true)
+			.orderBy('id')
+			.get();
 		const rows = published.rows;
 		const crate = orm.crate;
 		const original = crate.invoke.bind(crate);

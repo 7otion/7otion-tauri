@@ -47,11 +47,8 @@ describe('security', () => {
 		}
 
 		expect(
-			(
-				await db.run(
-					new Statement('SELECT name FROM users ORDER BY id'),
-				)
-			).rows,
+			(await db.run(new Statement('SELECT name FROM users ORDER BY id')))
+				.rows,
 		).toEqual([{ name: 'Ann' }, { name: 'Bob' }]);
 	});
 

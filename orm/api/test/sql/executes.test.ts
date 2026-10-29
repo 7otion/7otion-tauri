@@ -104,9 +104,7 @@ describe('what the builders write, run on SQLite', () => {
 				SelectBuilder.from('notes').whereRaw('id = ? OR id = ?', [1]),
 			),
 		);
-		const tooMany = await rejection(
-			db.run(new Statement('SELECT 1', [1])),
-		);
+		const tooMany = await rejection(db.run(new Statement('SELECT 1', [1])));
 
 		expect(tooFew.code).toBe('value');
 		expect(tooMany.code).toBe('value');

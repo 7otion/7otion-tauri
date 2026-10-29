@@ -83,8 +83,12 @@ import { ConnectionStore } from '@7otion-tauri/orm';
 export class Feed extends ConnectionStore {
 	search = $state('');
 	readonly posts = this.query(() => {
-		const all = Post.query().where('published', true).orderBy('created_at', 'desc');
-		return this.search ? all.where('title', 'LIKE', `%${this.search}%`) : all;
+		const all = Post.query()
+			.where('published', true)
+			.orderBy('created_at', 'desc');
+		return this.search
+			? all.where('title', 'LIKE', `%${this.search}%`)
+			: all;
 	});
 }
 ```

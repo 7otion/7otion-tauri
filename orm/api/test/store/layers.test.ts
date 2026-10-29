@@ -7,12 +7,18 @@ const SRC = join(import.meta.dir, '../../src');
 function files(dir: string): string[] {
 	return readdirSync(dir).flatMap(name => {
 		const path = join(dir, name);
-		return statSync(path).isDirectory() ? files(path) : path.endsWith('.ts') ? [path] : [];
+		return statSync(path).isDirectory()
+			? files(path)
+			: path.endsWith('.ts')
+				? [path]
+				: [];
 	});
 }
 
 function imports(path: string): string[] {
-	return [...readFileSync(path, 'utf8').matchAll(/from '([^']+)'/g)].map(match => match[1]!);
+	return [...readFileSync(path, 'utf8').matchAll(/from '([^']+)'/g)].map(
+		match => match[1]!,
+	);
 }
 
 /** Where a file lives: what Svelte is told through, the core, the store layer, or the package entry above them all. */
@@ -53,7 +59,10 @@ describe('the layers', () => {
 
 	test('only the bridge imports Tauri', () => {
 		const offenders = files(SRC)
-			.filter(path => !path.replaceAll('\\', '/').endsWith('database/bridge.ts'))
+			.filter(
+				path =>
+					!path.replaceAll('\\', '/').endsWith('database/bridge.ts'),
+			)
 			.flatMap(path =>
 				imports(path)
 					.filter(spec => spec.startsWith('@tauri-apps/'))
@@ -65,7 +74,14 @@ describe('the layers', () => {
 	test('a file that holds a rune is one Svelte compiles', () => {
 		const offenders = files(SRC)
 			.filter(path => !path.endsWith('.svelte.ts'))
-			.filter(path => /\$(state|derived|effect)\b/.test(readFileSync(path, 'utf8').replace(/\/\*[\s\S]*?\*\/|\/\/.*|`[^`]*`/g, '')))
+			.filter(path =>
+				/\$(state|derived|effect)\b/.test(
+					readFileSync(path, 'utf8').replace(
+						/\/\*[\s\S]*?\*\/|\/\/.*|`[^`]*`/g,
+						'',
+					),
+				),
+			)
 			.map(path => relative(SRC, path));
 		expect(offenders).toEqual([]);
 	});

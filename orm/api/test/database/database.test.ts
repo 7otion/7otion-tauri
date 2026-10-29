@@ -210,9 +210,7 @@ describe('Database', () => {
 		const db = await bed.databaseWith(SCHEMA);
 
 		const error = await rejection(
-			db.run(
-				new Statement('INSERT INTO files (size) VALUES (?)', [NaN]),
-			),
+			db.run(new Statement('INSERT INTO files (size) VALUES (?)', [NaN])),
 		);
 
 		expect(error).toBeInstanceOf(OrmError);

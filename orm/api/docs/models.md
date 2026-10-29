@@ -81,13 +81,13 @@ static readonly mutators = this.mutate({
 
 ## define() options
 
-| option       | meaning                                                              |
-| ------------ | -------------------------------------------------------------------- |
-| `table`      | Required.                                                            |
-| `columns`    | Required. At least one `primary()`.                                  |
+| option       | meaning                                                                |
+| ------------ | ---------------------------------------------------------------------- |
+| `table`      | Required.                                                              |
+| `columns`    | Required. At least one `primary()`.                                    |
 | `timestamps` | `true` for `created_at` / `updated_at`, or `{ createdAt, updatedAt }`. |
-| `fillable`   | The only columns `fill()` and `create()` may set.                    |
-| `guarded`    | Columns `fill()` and `create()` may never set.                       |
+| `fillable`   | The only columns `fill()` and `create()` may set.                      |
+| `guarded`    | Columns `fill()` and `create()` may never set.                         |
 
 The ORM creates no tables; use the crate's
 [migrations](../../backend/README.md#migrations), or `db.run` in tests.
@@ -106,13 +106,13 @@ The ORM creates no tables; use the crate's
 | `Column.date(storage?)`     | `Date`       | see below   |
 | `Column.custom(codec)`      | your type    | your choice |
 
-| modifier        | effect                                               |
-| --------------- | ---------------------------------------------------- |
-| `nullable()`    | Allows `null`.                                       |
+| modifier        | effect                                                 |
+| --------------- | ------------------------------------------------------ |
+| `nullable()`    | Allows `null`.                                         |
 | `primary()`     | Part of the primary key; several make a composite key. |
-| `generated()`   | The database fills the key on insert.                |
-| `emptyToNull()` | Stores `''` as `NULL`.                               |
-| `nocase()`      | The column is `COLLATE NOCASE`.                      |
+| `generated()`   | The database fills the key on insert.                  |
+| `emptyToNull()` | Stores `''` as `NULL`.                                 |
+| `nocase()`      | The column is `COLLATE NOCASE`.                        |
 
 Conversions apply everywhere, including values passed to `where()`.
 

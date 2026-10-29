@@ -26,7 +26,9 @@ describe('schema changes while connections are open', () => {
 		await orm.seed(db, ["INSERT INTO users (name) VALUES ('ann')"]);
 		expect(await User.find(1)).not.toBeNull();
 
-		await db.run(new Statement('ALTER TABLE users ADD COLUMN nickname TEXT'));
+		await db.run(
+			new Statement('ALTER TABLE users ADD COLUMN nickname TEXT'),
+		);
 
 		expect(await User.find(1)).not.toBeNull();
 	});
@@ -36,7 +38,9 @@ describe('schema changes while connections are open', () => {
 		await orm.seed(db, ["INSERT INTO users (name) VALUES ('ann')"]);
 		await db.transaction(tx => User.find(1, tx));
 
-		await db.run(new Statement('ALTER TABLE users ADD COLUMN nickname TEXT'));
+		await db.run(
+			new Statement('ALTER TABLE users ADD COLUMN nickname TEXT'),
+		);
 		await rejection(db.transaction(tx => User.find(1, tx)));
 
 		const written = await rejection(
@@ -50,7 +54,9 @@ describe('schema changes while connections are open', () => {
 		await orm.seed(db, ["INSERT INTO roles (name) VALUES ('admin')"]);
 		await db.run(new Statement('SELECT * FROM roles'));
 
-		await db.run(new Statement('ALTER TABLE roles RENAME COLUMN name TO title'));
+		await db.run(
+			new Statement('ALTER TABLE roles RENAME COLUMN name TO title'),
+		);
 
 		const { rows } = await db.run(new Statement('SELECT * FROM roles'));
 		expect(rows).toEqual([{ id: 1, title: 'admin' }]);
@@ -66,7 +72,10 @@ describe('values crossing the plugin', () => {
 
 		await db.run(new Statement('INSERT INTO r VALUES (?)', [value]));
 
-		const [stored] = bed.crate.direct(FILE).query('SELECT v FROM r').all() as {
+		const [stored] = bed.crate
+			.direct(FILE)
+			.query('SELECT v FROM r')
+			.all() as {
 			v: number;
 		}[];
 		expect(stored!.v).toBe(value);
@@ -83,7 +92,9 @@ describe('values crossing the plugin', () => {
 	test('an infinite REAL fails the statement rather than reading back as NULL', async () => {
 		const db = bed.database();
 
-		const result = await rejection(db.run(new Statement('SELECT 1e999 AS v')));
+		const result = await rejection(
+			db.run(new Statement('SELECT 1e999 AS v')),
+		);
 
 		expect(result).toBeInstanceOf(Error);
 	});
@@ -120,7 +131,9 @@ describe('statements at their edges', () => {
 		await first.run(new Statement('SELECT 1'));
 		const second = orm.bed.database({ readers: 4, writerWaitMs: 10000 });
 
-		const result = await rejection(second.run(new Statement('SELECT 1 AS one')));
+		const result = await rejection(
+			second.run(new Statement('SELECT 1 AS one')),
+		);
 
 		expect(result).not.toBeInstanceOf(Error);
 	});

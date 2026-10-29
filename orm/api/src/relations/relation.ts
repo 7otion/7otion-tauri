@@ -34,12 +34,19 @@ export interface AnyRelation {
 	relatedClass?(): ModelClass<any>;
 
 	/** How `parent`'s loaded value asks for its rows again after a commit. Absent when it cannot. */
-	sourceFor?(parent: Model, name: string, constraint?: EagerConstraint): Source<any>;
+	sourceFor?(
+		parent: Model,
+		name: string,
+		constraint?: EagerConstraint,
+	): Source<any>;
 
 	version?(name: string, constraint?: EagerConstraint): number;
 
 	existence?(name: string, constraint?: EagerConstraint): Existence;
 
 	/** The row in the identity map `parent` points at; undefined when the map cannot say. */
-	fromMap?(parent: Model, constraint?: EagerConstraint): Model | null | undefined;
+	fromMap?(
+		parent: Model,
+		constraint?: EagerConstraint,
+	): Model | null | undefined;
 }

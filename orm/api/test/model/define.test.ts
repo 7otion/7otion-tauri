@@ -29,7 +29,10 @@ test('a column cannot take the name of a model member, nor start with $', () => 
 
 test('a table defined on Model itself, outside a model class, is refused', () => {
 	expect(() =>
-		Model.define({ table: 't', columns: { id: Column.integer().primary() } }),
+		Model.define({
+			table: 't',
+			columns: { id: Column.integer().primary() },
+		}),
 	).toThrow('Define it inside its model class');
 });
 
@@ -43,7 +46,10 @@ test('a class that declares its own accessor over a column is refused as it is d
 		class Accessed extends Model<typeof Accessed.schema> {
 			static readonly schema = this.define({
 				table: 't',
-				columns: { id: Column.integer().primary(), name: Column.text() },
+				columns: {
+					id: Column.integer().primary(),
+					name: Column.text(),
+				},
 			});
 
 			get name(): string {

@@ -112,7 +112,9 @@ describe('relation loading edges', () => {
 				.with({ 'posts.comments': query => query.where('sort', 1) })
 				.where('id', 1)
 				.first())!;
-			expect(ann.posts.toArray().map(post => post.comments.length)).toEqual([1, 1]);
+			expect(
+				ann.posts.toArray().map(post => post.comments.length),
+			).toEqual([1, 1]);
 
 			// One post's comments are dropped; its recorded path stays.
 			ann.posts.at(0)!.$relations.clear('comments');
@@ -136,7 +138,9 @@ describe('relation loading edges', () => {
 			const head = ann.load('posts');
 			void head.then(() => ann.$relations.clear('posts'));
 
-			expect((await ann.load('posts.comments')).pluck('title')).toEqual(['A1']);
+			expect((await ann.load('posts.comments')).pluck('title')).toEqual([
+				'A1',
+			]);
 		},
 		T,
 	);
@@ -250,7 +254,10 @@ describe('relation loading edges', () => {
 
 			expect(() => first!.comments).toThrow(OrmError);
 			expect(second!.comments.pluck('body')).toEqual(['c3', 'c4']);
-			expect((await first!.load('comments')).pluck('body')).toEqual(['c1', 'c2']);
+			expect((await first!.load('comments')).pluck('body')).toEqual([
+				'c1',
+				'c2',
+			]);
 		},
 		T,
 	);

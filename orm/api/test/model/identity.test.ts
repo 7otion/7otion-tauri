@@ -91,9 +91,10 @@ describe('identity map and transaction instances', () => {
 			await User.find(1);
 		});
 
-		expect((await db.run(new Statement('SELECT name FROM users WHERE id = 1'))).rows[0]!.name).toBe(
-			'Written',
-		);
+		expect(
+			(await db.run(new Statement('SELECT name FROM users WHERE id = 1')))
+				.rows[0]!.name,
+		).toBe('Written');
 		expect(ann.name).toBe('Written');
 	});
 
@@ -137,9 +138,13 @@ describe('identity map and transaction instances', () => {
 	});
 
 	test('an edit on a model of the project before is not listed as unsaved in the project now open', async () => {
-		Model.connect(await orm.bed.databaseWith(SCHEMA, { path: 'first.sqlite' }));
+		Model.connect(
+			await orm.bed.databaseWith(SCHEMA, { path: 'first.sqlite' }),
+		);
 		const held = await User.create({ name: 'first' });
-		Model.connect(await orm.bed.databaseWith(SCHEMA, { path: 'second.sqlite' }));
+		Model.connect(
+			await orm.bed.databaseWith(SCHEMA, { path: 'second.sqlite' }),
+		);
 
 		held.draft().name = 'edited after the switch';
 
@@ -150,7 +155,9 @@ describe('identity map and transaction instances', () => {
 		await open();
 		const ann = (await User.find(1))!;
 		Post.registerEvent('update:after', async (_written, tx) => {
-			await User.query().where('id', 1).update({ name: 'Uncommitted' }, tx);
+			await User.query()
+				.where('id', 1)
+				.update({ name: 'Uncommitted' }, tx);
 			await User.find(1, tx);
 			throw new Error('undo');
 		});
@@ -158,7 +165,9 @@ describe('identity map and transaction instances', () => {
 		const post = (await Post.find(1))!;
 		await rejection(post.update({ title: 'Changed' }));
 
-		const stored = await User.database.run(new Statement('SELECT name FROM users WHERE id = 1'));
+		const stored = await User.database.run(
+			new Statement('SELECT name FROM users WHERE id = 1'),
+		);
 		expect(stored.rows[0]!.name).toBe('Ann');
 		expect(ann.name).toBe('Ann');
 	});

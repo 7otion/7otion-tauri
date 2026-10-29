@@ -88,8 +88,12 @@ export class ModelUpdate<M extends Model> {
 		models: readonly M[],
 	): Promise<M[]> {
 		const { table } = this.modelClass;
-		const limited = this.options.only !== undefined || this.options.values !== undefined;
-		const before = limited ? models.map(model => model.$attributes.pendingSnapshot()) : [];
+		const limited =
+			this.options.only !== undefined ||
+			this.options.values !== undefined;
+		const before = limited
+			? models.map(model => model.$attributes.pendingSnapshot())
+			: [];
 		await lifecycle.start(
 			models,
 			models.map(model => [model, this.changesOf(model)] as const),
@@ -106,7 +110,9 @@ export class ModelUpdate<M extends Model> {
 		);
 		if (rows.length === 0) return [];
 
-		const stamp = table.readBackAll(table.timestamps.updateStamp(new Date()));
+		const stamp = table.readBackAll(
+			table.timestamps.updateStamp(new Date()),
+		);
 		lifecycle.sending(rows.map(({ model }) => model));
 
 		const missing = await this.send(rows, stamp, lifecycle.tx);
@@ -114,7 +120,10 @@ export class ModelUpdate<M extends Model> {
 
 		const landed: Landed<M>[] = rows.map(({ model, sent, rekeyed }) => {
 			const before = model.$attributes.persistedKeySignature();
-			const changes = ModelUpdate.changesBetween(model, { ...sent, ...stamp });
+			const changes = ModelUpdate.changesBetween(model, {
+				...sent,
+				...stamp,
+			});
 			const shown = model.$attributes.shownSnapshot();
 			// Marks as saved what the statement carried. A column the app assigned while it
 			// was running was not carried, so it stays unsaved.
@@ -133,7 +142,10 @@ export class ModelUpdate<M extends Model> {
 		return ModelUpdate.changesBetween(
 			model,
 			Object.fromEntries(
-				this.columnsOf(model).map(column => [column, this.valueOf(model, column)]),
+				this.columnsOf(model).map(column => [
+					column,
+					this.valueOf(model, column),
+				]),
 			),
 		);
 	}
@@ -172,7 +184,9 @@ export class ModelUpdate<M extends Model> {
 	 * own and the shared one, are refused: a shared UPDATE has one `WHEN` per row.
 	 */
 	private withChanges(models: readonly M[]): M[] {
-		const changed = models.filter(model => this.columnsOf(model).length > 0);
+		const changed = models.filter(
+			model => this.columnsOf(model).length > 0,
+		);
 
 		const rows = new Set<string | null>();
 		for (const model of changed) {
@@ -200,13 +214,18 @@ export class ModelUpdate<M extends Model> {
 	}
 
 	/** `edited[i]` are the columns a `:before` handler edited on `models[i]`, written from the draft. */
-	private plan(models: readonly M[], edited: readonly (readonly string[])[]): PlannedRow<M>[] {
+	private plan(
+		models: readonly M[],
+		edited: readonly (readonly string[])[],
+	): PlannedRow<M>[] {
 		const { table } = this.modelClass;
 		const keyColumns = table.primaryKey.columns;
 		const rows: PlannedRow<M>[] = [];
 
 		for (const [index, model] of models.entries()) {
-			const columns = [...new Set([...this.columnsOf(model), ...edited[index]!])];
+			const columns = [
+				...new Set([...this.columnsOf(model), ...edited[index]!]),
+			];
 			if (columns.length === 0) continue;
 
 			const values = Object.fromEntries(
@@ -220,7 +239,9 @@ export class ModelUpdate<M extends Model> {
 			rows.push({
 				model,
 				key: keyColumns.map(column =>
-					table.column(column).encode(model.$attributes.persisted(column)),
+					table
+						.column(column)
+						.encode(model.$attributes.persisted(column)),
 				),
 				set: table.encode(values),
 				sent: table.readBackAll(values),
@@ -242,7 +263,8 @@ export class ModelUpdate<M extends Model> {
 		if (shared.length === 0) return rekeyed;
 
 		const keys = this.modelClass.table.primaryKey.columns.length;
-		const columns = new Set(shared.flatMap(({ set }) => Object.keys(set))).size;
+		const columns = new Set(shared.flatMap(({ set }) => Object.keys(set)))
+			.size;
 		// Bound values per row: for each column, the key and the value in its CASE; then the key once more in the WHERE.
 		const byParams = Chunks.sizeFor(columns * (keys + 1) + keys);
 		return [
@@ -265,7 +287,10 @@ export class ModelUpdate<M extends Model> {
 		const missing: M[] = [];
 
 		const { matching } = this.options;
-		if (matching && rows.every(({ rekeyed, edited }) => !rekeyed && !edited)) {
+		if (
+			matching &&
+			rows.every(({ rekeyed, edited }) => !rekeyed && !edited)
+		) {
 			const { affected } = await database.run(
 				UpdateBuilder.table(table.name)
 					.set({ ...rows[0]!.set, ...stamped })
@@ -280,7 +305,10 @@ export class ModelUpdate<M extends Model> {
 				const [row] = statement as [PlannedRow<M>];
 				const { affected } = await database.run(
 					this.whereKey(
-						UpdateBuilder.table(table.name).set({ ...row.set, ...stamped }),
+						UpdateBuilder.table(table.name).set({
+							...row.set,
+							...stamped,
+						}),
 						row.key,
 					),
 					tx,
@@ -304,7 +332,10 @@ export class ModelUpdate<M extends Model> {
 		return missing;
 	}
 
-	private whereKey(builder: UpdateBuilder, key: readonly Value[]): UpdateBuilder {
+	private whereKey(
+		builder: UpdateBuilder,
+		key: readonly Value[],
+	): UpdateBuilder {
 		return this.modelClass.table.primaryKey.columns.reduce(
 			(located, column, index) => located.where(column, key[index]!),
 			builder,
@@ -336,7 +367,10 @@ export class ModelUpdate<M extends Model> {
 
 		return rows
 			.map(({ model }) => model)
-			.filter(model => !present.has(model.$attributes.persistedKeySignature()));
+			.filter(
+				model =>
+					!present.has(model.$attributes.persistedKeySignature()),
+			);
 	}
 
 	private missingError(missing: readonly M[], of: number): OrmError {

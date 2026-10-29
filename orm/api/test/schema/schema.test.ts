@@ -171,7 +171,9 @@ describe('Table', () => {
 		meta.tags.push('b');
 		expect(table.column('meta').same(meta, copy)).toBe(false);
 
-		expect(table.column('price').same(new Money(1), new Money(1))).toBe(true);
+		expect(table.column('price').same(new Money(1), new Money(1))).toBe(
+			true,
+		);
 		expect(table.column('price').copy(new Money(1))).toBeInstanceOf(Money);
 
 		const bytes = new Uint8Array([1, 2]);

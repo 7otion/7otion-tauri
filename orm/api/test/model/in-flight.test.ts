@@ -24,7 +24,9 @@ async function untilStatementIsBuilt(): Promise<void> {
 
 /** The theme as the database holds it, past the instance the app holds. */
 async function stored(user: User): Promise<string | undefined> {
-	const [settings] = await User.query().where('id', user.id).pluck('settings');
+	const [settings] = await User.query()
+		.where('id', user.id)
+		.pluck('settings');
 	return settings?.theme;
 }
 
@@ -151,7 +153,9 @@ describe('writes that cross each other', () => {
 	test('a committed blob is handed out as a copy, so an edit in place changes nothing', async () => {
 		const db = await orm.open();
 		await db.run(
-			new Statement('CREATE TABLE files (id INTEGER PRIMARY KEY, body BLOB)'),
+			new Statement(
+				'CREATE TABLE files (id INTEGER PRIMARY KEY, body BLOB)',
+			),
 		);
 		class File extends Model<typeof File.schema> {
 			static readonly schema = this.define({
@@ -224,7 +228,9 @@ describe('writes that cross each other', () => {
 
 		expect(error).toBeInstanceOf(OrmError);
 		expect(error.message).toContain('Two User instances of the row');
-		expect(await User.query().where('id', shared.id).pluck('name')).toEqual(['Ann']);
+		expect(await User.query().where('id', shared.id).pluck('name')).toEqual(
+			['Ann'],
+		);
 	});
 });
 

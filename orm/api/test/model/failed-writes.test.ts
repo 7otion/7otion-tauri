@@ -11,7 +11,9 @@ describe('a write that fails leaves its models as they were', () => {
 	test('an update whose row is missing leaves a save:before edit off the model', async () => {
 		const db = await orm.open();
 		const user = await User.create({ name: 'Ann', age: 1 });
-		await db.run(new Statement('DELETE FROM users WHERE id = ?', [user.id]));
+		await db.run(
+			new Statement('DELETE FROM users WHERE id = ?', [user.id]),
+		);
 		User.registerEvent('save:before', written => {
 			for (const [model] of written) model.draft().age = 99;
 		});

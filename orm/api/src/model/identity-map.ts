@@ -14,7 +14,10 @@ interface Slot {
  * with unsaved edits is pinned, so a half-edited row is never lost to collection.
  */
 export class IdentityMap {
-	private static readonly ofOwner = new WeakMap<Database | Transaction, IdentityMap>();
+	private static readonly ofOwner = new WeakMap<
+		Database | Transaction,
+		IdentityMap
+	>();
 
 	/** Per class, not per table: two classes over one table are two shared instances. */
 	private readonly held = new Map<object, Map<string, WeakRef<Model>>>();
@@ -40,7 +43,9 @@ export class IdentityMap {
 
 	/** The map `model` belongs to: its transaction's when it was read in one, else its database's. */
 	static holding(model: Model): IdentityMap {
-		return IdentityMap.of(model.$scope ?? (model.constructor as ModelClass).database);
+		return IdentityMap.of(
+			model.$scope ?? (model.constructor as ModelClass).database,
+		);
 	}
 
 	/** `model` was held under `before`, and is now held under its key if its row exists. */
@@ -50,8 +55,12 @@ export class IdentityMap {
 	}
 
 	/** The shared instance for `modelClass`'s row `signature`, while one is held. */
-	get<M extends Model>(modelClass: ModelClass<M>, signature: string): M | undefined {
-		return this.held.get(modelClass)?.get(signature)?.deref() as M | undefined;
+	get<M extends Model>(
+		modelClass: ModelClass<M>,
+		signature: string,
+	): M | undefined {
+		return this.held.get(modelClass)?.get(signature)?.deref() as
+			M | undefined;
 	}
 
 	/** `model` becomes the shared instance for its row, replacing any other held for it. */

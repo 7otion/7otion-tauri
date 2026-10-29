@@ -90,7 +90,9 @@ export class Column<T = unknown, P extends boolean = boolean, W = T> {
 		return new Column(new JsonCodec(), NO_FLAGS);
 	}
 
-	static date(storage: DateStorage = 'iso'): Column<Date, false, Date | number> {
+	static date(
+		storage: DateStorage = 'iso',
+	): Column<Date, false, Date | number> {
 		return new Column(new DateCodec(storage), NO_FLAGS);
 	}
 
@@ -134,7 +136,8 @@ export class Column<T = unknown, P extends boolean = boolean, W = T> {
 	}
 
 	accept(value: unknown): unknown {
-		if (value === null || value === undefined || !this.codec?.accept) return value;
+		if (value === null || value === undefined || !this.codec?.accept)
+			return value;
 		return this.codec.accept(value, this.name);
 	}
 
@@ -142,7 +145,9 @@ export class Column<T = unknown, P extends boolean = boolean, W = T> {
 	encode(value: unknown): Value {
 		if (value === null || value === undefined) return null;
 		if (this.flags.emptyToNull && value === '') return null;
-		return this.codec ? this.codec.encode(value, this.name) : (value as Value);
+		return this.codec
+			? this.codec.encode(value, this.name)
+			: (value as Value);
 	}
 
 	/** @internal */
@@ -179,14 +184,24 @@ export class Column<T = unknown, P extends boolean = boolean, W = T> {
 	frozen(value: unknown): unknown {
 		if (value instanceof Date) return new FrozenDate(value.getTime());
 		if (this.isJson) return Column.freezeDeep(value);
-		if (this.copiedByDraft && value !== null && typeof value === 'object' && !(value instanceof Uint8Array)) {
+		if (
+			this.copiedByDraft &&
+			value !== null &&
+			typeof value === 'object' &&
+			!(value instanceof Uint8Array)
+		) {
 			return Object.freeze(value);
 		}
 		return value;
 	}
 
 	private static freezeDeep(value: unknown): unknown {
-		if (value === null || typeof value !== 'object' || Object.isFrozen(value)) return value;
+		if (
+			value === null ||
+			typeof value !== 'object' ||
+			Object.isFrozen(value)
+		)
+			return value;
 		for (const inner of Object.values(value)) Column.freezeDeep(inner);
 		return Object.freeze(value);
 	}

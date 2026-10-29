@@ -18,11 +18,16 @@ export class ModelSignals {
 
 	private readonly versions: SvelteMap<string, number>;
 
-	constructor(modelClass: object, columns: Iterable<string>, relations: readonly string[]) {
+	constructor(
+		modelClass: object,
+		columns: Iterable<string>,
+		relations: readonly string[],
+	) {
 		let keys = ModelSignals.keys.get(modelClass);
 		if (!keys) {
 			keys = [ROW, EXISTS, EDITS, ...relations].map(key => [key, 0]);
-			for (const column of columns) keys.push([column, 0], [edit(column), 0]);
+			for (const column of columns)
+				keys.push([column, 0], [edit(column), 0]);
 			ModelSignals.keys.set(modelClass, keys);
 		}
 		this.versions = new SvelteMap(keys);

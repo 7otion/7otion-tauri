@@ -141,7 +141,9 @@ describe('relations', () => {
 		expect(ann!.posts.pluck('title')).toEqual(['A1', 'A2']);
 		expect(post!.author!.name).toBe('Ann');
 		expect(
-			orm.crate.statements.some(sql => sql.includes('`posts`.`title`, `posts`.`user_id`')),
+			orm.crate.statements.some(sql =>
+				sql.includes('`posts`.`title`, `posts`.`user_id`'),
+			),
 		).toBe(true);
 	});
 
@@ -176,7 +178,9 @@ describe('relations', () => {
 		await open();
 
 		const lines = await OrderLine.query().with('order.lines').get();
-		const [first, second] = lines.toArray().filter(line => line.tenant === 'acme');
+		const [first, second] = lines
+			.toArray()
+			.filter(line => line.tenant === 'acme');
 
 		expect(first!.order).toBe(second!.order);
 		expect(first!.order!.lines).toHaveLength(2);
@@ -219,13 +223,9 @@ describe('relations', () => {
 		try {
 			const notes = await Note.query().with('target').orderBy('id').get();
 
-			expect(notes.toArray().map(note => note.target?.constructor.name)).toEqual([
-				'User',
-				'Post',
-				'User',
-				undefined,
-				undefined,
-			]);
+			expect(
+				notes.toArray().map(note => note.target?.constructor.name),
+			).toEqual(['User', 'Post', 'User', undefined, undefined]);
 			expect((notes.at(1)!.target as Post).title).toBe('A1');
 			expect(warned).toEqual([
 				'[orm] No model is mapped for target_kind = "ghost".',
@@ -257,11 +257,12 @@ describe('relations', () => {
 			.get();
 		const lines = await OrderLine.query().with('order').get();
 
-		expect(orders.toArray().map(order => order.lines.pluck('sku'))).toEqual([
-			['a', 'b'],
-			['z'],
+		expect(orders.toArray().map(order => order.lines.pluck('sku'))).toEqual(
+			[['a', 'b'], ['z']],
+		);
+		expect(lines.toArray().map(line => line.order!.total)).toEqual([
+			10, 10, 20,
 		]);
-		expect(lines.toArray().map(line => line.order!.total)).toEqual([10, 10, 20]);
 	});
 
 	test('keys whose two sides declare different codecs match in the form they are stored', async () => {
@@ -279,7 +280,10 @@ describe('relations', () => {
 		class FirstPost extends Model<typeof FirstPost.schema> {
 			static readonly schema = this.define({
 				table: 'posts',
-				columns: { id: Column.integer().primary(), title: Column.text() },
+				columns: {
+					id: Column.integer().primary(),
+					title: Column.text(),
+				},
 			});
 
 			declare flagged: Collection<Flagged>;
@@ -342,7 +346,10 @@ describe('relations', () => {
 
 	test('a relation cannot be assigned, while a column of the row it holds can', async () => {
 		await open();
-		const post = (await Post.query().with('author').where('id', 1).first())!;
+		const post = (await Post.query()
+			.with('author')
+			.where('id', 1)
+			.first())!;
 		const cy = (await User.find(3))!;
 
 		expect(() => {
@@ -358,7 +365,10 @@ describe('relations', () => {
 		class Clash extends Model<typeof Clash.schema> {
 			static readonly schema = this.define({
 				table: 'posts',
-				columns: { id: Column.integer().primary(), title: Column.text() },
+				columns: {
+					id: Column.integer().primary(),
+					title: Column.text(),
+				},
 			});
 
 			static readonly relations = {
@@ -629,7 +639,10 @@ describe('sync', () => {
 			unchanged: 0,
 		});
 		expect(
-			(await post.load('tags')).toArray().map(tag => [tag.tag, tag.sort]).sort(),
+			(await post.load('tags'))
+				.toArray()
+				.map(tag => [tag.tag, tag.sort])
+				.sort(),
 		).toEqual([
 			['b', 5],
 			['c', 0],
@@ -706,10 +719,15 @@ describe('sync', () => {
 
 	test('sync leaves the loaded relation loaded, showing the synced set', async () => {
 		await open();
-		const post = (await Post.query().where('id', 1).with('comments').first())!;
+		const post = (await Post.query()
+			.where('id', 1)
+			.with('comments')
+			.first())!;
 		const comments = post.comments;
 
-		await post.sync('comments', [{ body: 'only', sort: 0 }], { matchOn: ['body'] });
+		await post.sync('comments', [{ body: 'only', sort: 0 }], {
+			matchOn: ['body'],
+		});
 
 		expect(post.comments).toBe(comments);
 		expect(comments.pluck('body')).toEqual(['only']);

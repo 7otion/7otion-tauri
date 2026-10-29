@@ -33,7 +33,9 @@ export interface Landed<M> {
  */
 export class WriteLifecycle<M extends Model> {
 	/** The events each kind of write fires, `:before` in this order and `:after` in reverse. */
-	private static readonly VERBS: Readonly<Record<WriteKind, readonly EventVerb[]>> = {
+	private static readonly VERBS: Readonly<
+		Record<WriteKind, readonly EventVerb[]>
+	> = {
 		created: INSERT_VERBS,
 		updated: UPDATE_VERBS,
 		deleted: DELETE_VERBS,
@@ -69,11 +71,18 @@ export class WriteLifecycle<M extends Model> {
 
 		if (
 			modelClass.$events.has(WriteLifecycle.VERBS[kind], IN_WRITE) ||
-			!(typeof oneStatement === 'function' ? oneStatement() : oneStatement)
+			!(typeof oneStatement === 'function'
+				? oneStatement()
+				: oneStatement)
 		) {
 			return WriteLifecycle.transaction(database, tx, inner =>
 				work(
-					new WriteLifecycle(modelClass, kind, inner, Settlement.of(database, inner)),
+					new WriteLifecycle(
+						modelClass,
+						kind,
+						inner,
+						Settlement.of(database, inner),
+					),
 				),
 			);
 		}
@@ -90,7 +99,10 @@ export class WriteLifecycle<M extends Model> {
 				return await work(lifecycle);
 			} catch (error) {
 				// No savepoint of its own to roll back.
-				lifecycle.settlement.withdraw(lifecycle.queued, lifecycle.recorded);
+				lifecycle.settlement.withdraw(
+					lifecycle.queued,
+					lifecycle.recorded,
+				);
 				lifecycle.restoreUnwritten();
 				throw error;
 			} finally {
@@ -146,7 +158,9 @@ export class WriteLifecycle<M extends Model> {
 		// Queued before any `:before` handler runs: a write a handler makes queues its own
 		// `:committed` handlers after this write's, in the order the writes began.
 		for (const verb of [...this.verbs].reverse()) {
-			for (const handler of this.modelClass.$events.handlersFor(`${verb}:committed`)) {
+			for (const handler of this.modelClass.$events.handlersFor(
+				`${verb}:committed`,
+			)) {
 				this.queued.push(
 					this.settlement.queue(
 						`${verb}:committed on ${this.modelClass.name}`,
@@ -155,7 +169,8 @@ export class WriteLifecycle<M extends Model> {
 				);
 			}
 		}
-		for (const verb of this.verbs) await this.fire(verb, 'before', announced);
+		for (const verb of this.verbs)
+			await this.fire(verb, 'before', announced);
 	}
 
 	/** Right before the statements go out: the values each model is about to send are noted, so a failure keeps what the app assigned since. */
@@ -169,17 +184,27 @@ export class WriteLifecycle<M extends Model> {
 	 */
 	async finish(landed: readonly Landed<M>[]): Promise<void> {
 		if (landed.length === 0) return;
-		const written: Written<M> = landed.map(({ model, changes }) => [model, changes] as const);
+		const written: Written<M> = landed.map(
+			({ model, changes }) => [model, changes] as const,
+		);
 		const { kind } = this;
-		const entries: Entry[] = landed.map(({ model, changes }) => ({ model, kind, changes }));
+		const entries: Entry[] = landed.map(({ model, changes }) => ({
+			model,
+			kind,
+			changes,
+		}));
 		this.recorded.push(...entries);
 		this.settlement.record(entries);
 		for (const queued of this.queued) queued.entries.push(...entries);
 
-		for (const verb of [...this.verbs].reverse()) await this.fire(verb, 'after', written);
+		for (const verb of [...this.verbs].reverse())
+			await this.fire(verb, 'after', written);
 
 		for (const { model, changes } of landed) {
-			await model.$relations.refreshAffected(Object.keys(changes), this.tx);
+			await model.$relations.refreshAffected(
+				Object.keys(changes),
+				this.tx,
+			);
 		}
 	}
 
@@ -189,7 +214,9 @@ export class WriteLifecycle<M extends Model> {
 		moment: 'before' | 'after',
 		written: Written<M>,
 	): Promise<void> {
-		const handlers = this.modelClass.$events.handlersFor(`${verb}:${moment}`);
+		const handlers = this.modelClass.$events.handlersFor(
+			`${verb}:${moment}`,
+		);
 		// A write that started with no `:before`/`:after` handler has no transaction to give one.
 		// A handler registered while it was running applies from the next write.
 		if (written.length === 0 || handlers.length === 0 || !this.tx) return;

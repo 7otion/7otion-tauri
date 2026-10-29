@@ -88,7 +88,9 @@ export class Database {
 		tx?: Transaction,
 	): Promise<StatementResult> {
 		const prepared =
-			statement instanceof Statement ? statement : statement.toStatement();
+			statement instanceof Statement
+				? statement
+				: statement.toStatement();
 
 		const { length } = prepared.params;
 		if (length > Statement.MAX_PARAMS) {
@@ -101,7 +103,9 @@ export class Database {
 
 		const bridge = await this.bridge();
 		if (!tx) {
-			return this.attempt(prepared, null, () => bridge.send(prepared, null));
+			return this.attempt(prepared, null, () =>
+				bridge.send(prepared, null),
+			);
 		}
 
 		tx.assertBelongsTo(this);
@@ -192,7 +196,9 @@ export class Database {
 		this.connection = null;
 		try {
 			// A load still in flight is waited for, so the file it opens is not left open behind this.
-			const bridge = connection ? await connection.catch(() => null) : null;
+			const bridge = connection
+				? await connection.catch(() => null)
+				: null;
 			await bridge?.close();
 		} catch (error) {
 			if (!failed) first = error;

@@ -43,7 +43,12 @@ describe('what a read follows', () => {
 
 		await ann.delete();
 
-		expect([exists.last, name.last, edit.last, dirty.last]).toEqual([false, 'Ann', 'Ann', false]);
+		expect([exists.last, name.last, edit.last, dirty.last]).toEqual([
+			false,
+			'Ann',
+			'Ann',
+			false,
+		]);
 	});
 
 	test('a draft edit tells the readers of that draft column, never of the committed column', async () => {
@@ -57,7 +62,12 @@ describe('what a read follows', () => {
 		ann.draft().name = 'Annie';
 		ann.draft().name = 'Annie';
 
-		expect([edit.reruns, otherEdit.reruns, dirty.reruns, column.reruns]).toEqual([1, 0, 1, 0]);
+		expect([
+			edit.reruns,
+			otherEdit.reruns,
+			dirty.reruns,
+			column.reruns,
+		]).toEqual([1, 0, 1, 0]);
 	});
 
 	test('a draft column with no edit follows the commits beneath it, and one with an edit keeps showing it', async () => {
@@ -98,13 +108,19 @@ describe('what a read follows', () => {
 		await orm.open();
 		await User.create({ name: 'Ann' });
 		const users = await User.query().orderBy('name').get();
-		const iterated = new Watch(() => [...users].map(user => user.name).join());
+		const iterated = new Watch(() =>
+			[...users].map(user => user.name).join(),
+		);
 		const plucked = new Watch(() => users.pluck('name').join());
 		const first = new Watch(() => users.first?.name);
 
 		await User.create({ name: 'Aaron' });
 
-		expect([iterated.last, plucked.last, first.last]).toEqual(['Aaron,Ann', 'Aaron,Ann', 'Aaron']);
+		expect([iterated.last, plucked.last, first.last]).toEqual([
+			'Aaron,Ann',
+			'Aaron,Ann',
+			'Aaron',
+		]);
 	});
 
 	test('a relation loaded again by another query moves its readers to the new collection', async () => {
@@ -171,16 +187,26 @@ describe('what a read follows', () => {
 		const ann = await User.create({ name: 'Ann', age: 30 });
 		const name = new Watch(() => ann.name);
 		const age = new Watch(() => ann.age);
-		await database.run(new Statement(`UPDATE users SET name = 'Annie' WHERE id = ${ann.id}`));
+		await database.run(
+			new Statement(
+				`UPDATE users SET name = 'Annie' WHERE id = ${ann.id}`,
+			),
+		);
 
 		await ann.refresh();
 		expect([name.last, age.reruns]).toEqual(['Annie', 0]);
 
-		await database.run(new Statement(`UPDATE users SET name = 'Anna' WHERE id = ${ann.id}`));
+		await database.run(
+			new Statement(
+				`UPDATE users SET name = 'Anna' WHERE id = ${ann.id}`,
+			),
+		);
 		expect(await User.find(ann.id)).toBe(ann);
 		expect(name.last).toBe('Anna');
 
-		await database.run(new Statement(`UPDATE users SET name = 'Ana' WHERE id = ${ann.id}`));
+		await database.run(
+			new Statement(`UPDATE users SET name = 'Ana' WHERE id = ${ann.id}`),
+		);
 		await database.transaction(async tx => {
 			await ann.refresh(undefined, tx);
 		});
@@ -191,7 +217,9 @@ describe('what a read follows', () => {
 		const database = await orm.open();
 		const ann = await User.create({ name: 'Ann' });
 		const exists = new Watch(() => ann.exists);
-		await database.run(new Statement(`DELETE FROM users WHERE id = ${ann.id}`));
+		await database.run(
+			new Statement(`DELETE FROM users WHERE id = ${ann.id}`),
+		);
 
 		expect(await ann.delete()).toBe(false);
 

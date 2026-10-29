@@ -32,10 +32,7 @@ import type { Column } from '../schema/column';
 import { Table, type TableDefinition } from '../schema/table';
 import { SelectBuilder } from '../sql/select';
 import { ModelDelete } from '../write/model-delete';
-import {
-	ModelInsert,
-	type InsertOrIgnoreOptions,
-} from '../write/model-insert';
+import { ModelInsert, type InsertOrIgnoreOptions } from '../write/model-insert';
 import { ModelUpdate } from '../write/model-update';
 import {
 	RelationWriter,
@@ -112,7 +109,10 @@ abstract class BaseModel {
 
 	static relations: {} = {};
 
-	private static readonly eventRegistries = new WeakMap<object, EventRegistry>();
+	private static readonly eventRegistries = new WeakMap<
+		object,
+		EventRegistry
+	>();
 	declare static readonly events?: ModelEvents<any>;
 
 	declare static readonly mutators?: Mutators<any>;
@@ -184,9 +184,13 @@ abstract class BaseModel {
 
 	/** @internal The relation this class declares as `name`. Own keys only, so `toString` is not a relation. */
 	static $relation(name: string): AnyRelation {
-		const relations = this.relations as Readonly<Record<string, AnyRelation>>;
+		const relations = this.relations as Readonly<
+			Record<string, AnyRelation>
+		>;
 		if (!Object.hasOwn(relations, name)) {
-			throw new OrmError(`[orm] ${this.name} declares no relation named '${name}'.`);
+			throw new OrmError(
+				`[orm] ${this.name} declares no relation named '${name}'.`,
+			);
 		}
 		return relations[name]!;
 	}
@@ -457,7 +461,11 @@ abstract class BaseModel {
 	}
 
 	/** @internal A read found the row with other values than the model showed: `columns`, and the row itself when it was taken for gone. */
-	$refreshed(values: Readonly<Record<string, unknown>>, tx?: Transaction, began?: number): void {
+	$refreshed(
+		values: Readonly<Record<string, unknown>>,
+		tx?: Transaction,
+		began?: number,
+	): void {
 		const columns = this.$attributes.refreshed(values, tx, began);
 		const found = !this.$exists;
 		this.$exists = true;
@@ -480,7 +488,12 @@ abstract class BaseModel {
 	/** @internal Held by the map while it has unsaved edits, so a half-edited row is never collected. */
 	$repin(): void {
 		const database = BaseModel.$default;
-		if (this.$scope || !database || this.$generation !== BaseModel.$generation) return;
+		if (
+			this.$scope ||
+			!database ||
+			this.$generation !== BaseModel.$generation
+		)
+			return;
 		IdentityMap.of(database).pin(this, this.$attributes.dirty().length > 0);
 	}
 
@@ -529,9 +542,9 @@ abstract class BaseModel {
 			throw new OrmError(
 				this.$scope.isOpen
 					? `[orm] This ${name} was read inside a transaction, so it is written with that ` +
-						"transaction's handle: save(tx), update(…, tx), delete(tx)."
+							"transaction's handle: save(tx), update(…, tx), delete(tx)."
 					: `[orm] This ${name} was read inside a transaction that has ended, so it cannot ` +
-						'be written. Read it again from the database.',
+							'be written. Read it again from the database.',
 			);
 		}
 		Accessors.assertUnshadowed(this);
@@ -593,11 +606,16 @@ abstract class BaseModel {
 		const values = Object.fromEntries(
 			Object.entries(staged).filter(
 				([column, value]) =>
-					!modelClass.table.column(column).storesAs(value, this.$attributes.get(column)),
+					!modelClass.table
+						.column(column)
+						.storesAs(value, this.$attributes.get(column)),
 			),
 		);
 		if (Object.keys(values).length > 0) {
-			await new ModelUpdate(modelClass, { values: () => values }).write([this], tx);
+			await new ModelUpdate(modelClass, { values: () => values }).write(
+				[this],
+				tx,
+			);
 		}
 		return this;
 	}
@@ -607,8 +625,13 @@ abstract class BaseModel {
 	 * edits are saved and the rest stay pending.
 	 */
 	save(...columns: ColumnKey<this>[]): Promise<this>;
-	save(tx: Transaction | undefined, ...columns: ColumnKey<this>[]): Promise<this>;
-	async save(...args: (Transaction | ColumnKey<this> | undefined)[]): Promise<this> {
+	save(
+		tx: Transaction | undefined,
+		...columns: ColumnKey<this>[]
+	): Promise<this>;
+	async save(
+		...args: (Transaction | ColumnKey<this> | undefined)[]
+	): Promise<this> {
 		const tx = args[0] instanceof Transaction ? args[0] : undefined;
 		const columns = args.filter(
 			(arg): arg is ColumnKey<this> => typeof arg === 'string',
@@ -663,11 +686,9 @@ abstract class BaseModel {
 	 * finished yet is already removing it (an event handler deleting back what deleted it).
 	 */
 	delete(tx?: Transaction): Promise<boolean> {
-		return new ModelDelete(this.constructor as unknown as ModelClass<this>).write(
-			[this],
-			tx,
-			removed => removed.length > 0,
-		);
+		return new ModelDelete(
+			this.constructor as unknown as ModelClass<this>,
+		).write([this], tx, removed => removed.length > 0);
 	}
 
 	load<P extends LoadPath<this>>(

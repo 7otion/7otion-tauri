@@ -46,8 +46,14 @@ describe('writes at once and in odd order', () => {
 
 		for (let round = 0; round < 40; round++) {
 			const user = await User.create({ name: `Ann${round}` });
-			const reading = round % 2 === 0 ? User.find(user.id) : User.query().where('id', user.id).get();
-			await Promise.all([reading, user.update({ name: `Annie${round}` })]);
+			const reading =
+				round % 2 === 0
+					? User.find(user.id)
+					: User.query().where('id', user.id).get();
+			await Promise.all([
+				reading,
+				user.update({ name: `Annie${round}` }),
+			]);
 			if (user.name !== `Annie${round}`) wrong.push(user.name);
 		}
 

@@ -111,7 +111,9 @@ describe('reading', () => {
 
 		for (const inside of [undone, committed]) {
 			expect(() => inside.name).toThrow('has ended');
-			expect((await rejection(inside.save())).message).toContain('has ended');
+			expect((await rejection(inside.save())).message).toContain(
+				'has ended',
+			);
 		}
 	});
 
@@ -370,7 +372,10 @@ describe('reading', () => {
 		class Shadowed extends Model<typeof Shadowed.schema> {
 			static readonly schema = this.define({
 				table: 'users',
-				columns: { id: Column.integer().primary(), name: Column.text() },
+				columns: {
+					id: Column.integer().primary(),
+					name: Column.text(),
+				},
 			});
 
 			name = 'field';

@@ -11,16 +11,16 @@ Model.connect(db);
 
 A `Database` is one SQLite file. Nothing opens until the first statement.
 
-| option          | default | meaning                                                         |
-| --------------- | ------- | --------------------------------------------------------------- |
-| `path`          | —       | Relative to the app's data directory unless absolute.           |
-| `migrations`    | none    | The migration set to run on open, as registered in Rust.        |
+| option          | default | meaning                                                          |
+| --------------- | ------- | ---------------------------------------------------------------- |
+| `path`          | —       | Relative to the app's data directory unless absolute.            |
+| `migrations`    | none    | The migration set to run on open, as registered in Rust.         |
 | `namespace`     | `path`  | Prefix for the keys of values its stores keep in `localStorage`. |
-| `pragmas`       | none    | Extra pragmas, run after the defaults.                          |
-| `writerWaitMs`  | `10000` | How long a write waits for the writer before failing as `busy`. |
-| `readers`       | `4`     | Number of read-only connections.                                |
-| `key`           | none    | SQLCipher key. Needs the crate's `encryption` feature.          |
-| `loggerEnabled` | `false` | Log every statement to the console.                             |
+| `pragmas`       | none    | Extra pragmas, run after the defaults.                           |
+| `writerWaitMs`  | `10000` | How long a write waits for the writer before failing as `busy`.  |
+| `readers`       | `4`     | Number of read-only connections.                                 |
+| `key`           | none    | SQLCipher key. Needs the crate's `encryption` feature.           |
+| `loggerEnabled` | `false` | Log every statement to the console.                              |
 
 Files open in WAL mode with foreign keys on. Prefer passing an encryption key
 from Rust; one passed from JavaScript crosses IPC, and a warning is logged.
@@ -98,7 +98,9 @@ await db.run(
 ```ts
 import { SelectBuilder } from '@7otion-tauri/orm';
 
-await db.run(SelectBuilder.from('audit_log').where('level', '>=', 3).limit(100));
+await db.run(
+	SelectBuilder.from('audit_log').where('level', '>=', 3).limit(100),
+);
 ```
 
 Rows changed by raw SQL are not reflected in models already loaded until they
@@ -108,14 +110,14 @@ are read again.
 
 Every error extends `OrmError`.
 
-| class                | when                                                              |
-| -------------------- | ----------------------------------------------------------------- |
+| class                | when                                                                   |
+| -------------------- | ---------------------------------------------------------------------- |
 | `DatabaseError`      | SQLite or the plugin rejected a statement. Has `code` and `statement`. |
-| `QueryError`         | A query could not be built, e.g. an unknown operator.             |
-| `TransactionError`   | A transaction handle was misused.                                 |
-| `ModelNotFoundError` | `findOrFail` and `firstOrFail`.                                   |
-| `AfterCommitError`   | The write committed, but a `:committed` handler threw.            |
-| `StoreError`         | A store was misused, e.g. created with `new`.                     |
+| `QueryError`         | A query could not be built, e.g. an unknown operator.                  |
+| `TransactionError`   | A transaction handle was misused.                                      |
+| `ModelNotFoundError` | `findOrFail` and `firstOrFail`.                                        |
+| `AfterCommitError`   | The write committed, but a `:committed` handler threw.                 |
+| `StoreError`         | A store was misused, e.g. created with `new`.                          |
 
 `DatabaseError.code` is one of `unique`, `foreign_key`, `not_null`, `check`,
 `busy`, `read_only`, `value`, `misuse`, `protocol`, `unknown`. Error messages

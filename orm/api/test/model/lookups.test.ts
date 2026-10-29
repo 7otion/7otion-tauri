@@ -24,11 +24,16 @@ describe('a loaded to-one relation follows its row', () => {
 		return db;
 	};
 	const selects = (table: string) =>
-		orm.crate.statements.filter(sql => sql.startsWith(`SELECT * FROM \`${table}\``));
+		orm.crate.statements.filter(sql =>
+			sql.startsWith(`SELECT * FROM \`${table}\``),
+		);
 
 	test('a belongsTo whose row is deleted reads null, without a query', async () => {
 		await open();
-		const post = (await Post.query().with('author').where('id', 1).first())!;
+		const post = (await Post.query()
+			.with('author')
+			.where('id', 1)
+			.first())!;
 		const ann = post.author!;
 		orm.crate.calls.length = 0;
 
@@ -40,7 +45,10 @@ describe('a loaded to-one relation follows its row', () => {
 
 	test('a belongsTo whose row is deleted inside a transaction reads null there, and is back after a rollback', async () => {
 		const db = await open();
-		const post = (await Post.query().with('author').where('id', 1).first())!;
+		const post = (await Post.query()
+			.with('author')
+			.where('id', 1)
+			.first())!;
 
 		await rejection(
 			db.transaction(async tx => {
@@ -66,7 +74,9 @@ describe('a loaded to-one relation follows its row', () => {
 
 	test('a hasOne gains a row created for it, and loses one moved to another parent, both without a query', async () => {
 		await open();
-		const [ann, bob] = (await User.query().with('profile').orderBy('id').get()).toArray();
+		const [ann, bob] = (
+			await User.query().with('profile').orderBy('id').get()
+		).toArray();
 		expect(bob!.profile).toBeNull();
 		orm.crate.calls.length = 0;
 
@@ -96,7 +106,10 @@ describe('a loaded to-one relation follows its row', () => {
 
 	test('a belongsTo re-pointed inside a transaction holds the shared row once it commits', async () => {
 		const db = await open();
-		const post = (await Post.query().with('author').where('id', 1).first())!;
+		const post = (await Post.query()
+			.with('author')
+			.where('id', 1)
+			.first())!;
 		const bob = (await User.find(2))!;
 		orm.crate.calls.length = 0;
 
@@ -115,7 +128,10 @@ describe('a loaded to-one relation follows its row', () => {
 
 	test('a row written through a transaction’s own instance re-points the shared one, from the identity map', async () => {
 		const db = await open();
-		const post = (await Post.query().with('author').where('id', 1).first())!;
+		const post = (await Post.query()
+			.with('author')
+			.where('id', 1)
+			.first())!;
 		const bob = (await User.find(2))!;
 		orm.crate.calls.length = 0;
 
@@ -142,8 +158,14 @@ describe('a loaded to-one relation follows its row', () => {
 
 	test('a commit tells the readers of the relations that now point elsewhere, and no other', async () => {
 		await open();
-		const post = (await Post.query().with('author').where('id', 1).first())!;
-		const other = (await Post.query().with('author').where('id', 3).first())!;
+		const post = (await Post.query()
+			.with('author')
+			.where('id', 1)
+			.first())!;
+		const other = (await Post.query()
+			.with('author')
+			.where('id', 3)
+			.first())!;
 		const pointed = new Watch(() => post.author);
 		const untouched = new Watch(() => other.author);
 

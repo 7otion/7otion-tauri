@@ -29,20 +29,30 @@ describe('whereHas filters by a related table', () => {
 	test('a hasMany: the rows that have a related row, or one the callback accepts', async () => {
 		await open();
 
-		expect(await names(User.query().whereHas('posts').orderBy('id'))).toEqual(['Ann', 'Bob']);
 		expect(
-			await names(User.query().whereHas('posts', posts => posts.where('title', 'B1'))),
+			await names(User.query().whereHas('posts').orderBy('id')),
+		).toEqual(['Ann', 'Bob']);
+		expect(
+			await names(
+				User.query().whereHas('posts', posts =>
+					posts.where('title', 'B1'),
+				),
+			),
 		).toEqual(['Bob']);
 	});
 
 	test('whereDoesntHave gives the rows with none', async () => {
 		await open();
 
-		expect(await names(User.query().whereDoesntHave('posts'))).toEqual(['Cy']);
+		expect(await names(User.query().whereDoesntHave('posts'))).toEqual([
+			'Cy',
+		]);
 		expect(
 			await names(
 				User.query()
-					.whereDoesntHave('posts', posts => posts.where('title', 'A1'))
+					.whereDoesntHave('posts', posts =>
+						posts.where('title', 'A1'),
+					)
 					.orderBy('id'),
 			),
 		).toEqual(['Bob', 'Cy']);
@@ -52,18 +62,17 @@ describe('whereHas filters by a related table', () => {
 		await open();
 		await Post.create({ title: 'C1', user_id: 3 });
 
-		expect(await names(User.query().whereHas('posts').orderBy('id'))).toEqual([
-			'Ann',
-			'Bob',
-			'Cy',
-		]);
-		expect(await names(User.query().whereHas('posts.comments').orderBy('id'))).toEqual([
-			'Ann',
-			'Bob',
-		]);
+		expect(
+			await names(User.query().whereHas('posts').orderBy('id')),
+		).toEqual(['Ann', 'Bob', 'Cy']);
+		expect(
+			await names(User.query().whereHas('posts.comments').orderBy('id')),
+		).toEqual(['Ann', 'Bob']);
 		expect(
 			await names(
-				User.query().whereHas('posts.comments', comments => comments.where('body', 'c3')),
+				User.query().whereHas('posts.comments', comments =>
+					comments.where('body', 'c3'),
+				),
 			),
 		).toEqual(['Bob']);
 	});
@@ -76,7 +85,11 @@ describe('whereHas filters by a related table', () => {
 			.toArray();
 		expect(posts.map(post => post.title)).toEqual(['B1']);
 		expect(
-			await names(User.query().whereHas('roles', roles => roles.where('name', 'admin'))),
+			await names(
+				User.query().whereHas('roles', roles =>
+					roles.where('name', 'admin'),
+				),
+			),
 		).toEqual(['Ann']);
 		expect(await names(User.query().whereHas('notes'))).toEqual(['Cy']);
 	});
@@ -121,7 +134,9 @@ describe('a list filtered by whereHas follows the related table', () => {
 		return db;
 	};
 	const selects = (table: string) =>
-		orm.crate.statements.filter(sql => sql.startsWith(`SELECT * FROM \`${table}\``));
+		orm.crate.statements.filter(sql =>
+			sql.startsWith(`SELECT * FROM \`${table}\``),
+		);
 
 	test('a related row created or deleted lets a row into the list or out of it', async () => {
 		await open();
@@ -163,7 +178,10 @@ describe('a list filtered by whereHas follows the related table', () => {
 
 	test('a dotted path follows the table at its end', async () => {
 		await open();
-		const users = await User.query().whereHas('posts.comments').orderBy('id').get();
+		const users = await User.query()
+			.whereHas('posts.comments')
+			.orderBy('id')
+			.get();
 		expect(users.pluck('name')).toEqual(['Ann', 'Bob']);
 
 		await (await Comment.query().where('post_id', 3).first())!.delete();

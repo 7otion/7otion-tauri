@@ -16,15 +16,15 @@ Models, drafts and collections are reactive. Read them in markup, `$derived` or
 Updates are fine-grained: `{character.name}` re-renders only when that column of
 that row changes, and a list re-renders only when rows join, leave or move.
 
-| read                    | updates when                              |
-| ----------------------- | ----------------------------------------- |
-| `model.name`            | that column is committed                  |
-| `model.exists`          | the row is created or deleted             |
-| `model.author`          | the relation points at another row        |
-| `model.comments`        | a row joins, leaves or moves              |
-| `draft.name`            | the column is edited, discarded or committed |
-| `model.isDirty`         | the draft or the row changes              |
-| `collection.rows`       | a row joins, leaves or moves              |
+| read              | updates when                                 |
+| ----------------- | -------------------------------------------- |
+| `model.name`      | that column is committed                     |
+| `model.exists`    | the row is created or deleted                |
+| `model.author`    | the relation points at another row           |
+| `model.comments`  | a row joins, leaves or moves                 |
+| `draft.name`      | the column is edited, discarded or committed |
+| `model.isDirty`   | the draft or the row changes                 |
+| `collection.rows` | a row joins, leaves or moves                 |
 
 Models and values are handed out as they are, not wrapped in proxies, so `===`,
 `structuredClone` and `invoke` work on them. Keep a model in `$state.raw`:

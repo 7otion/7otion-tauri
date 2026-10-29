@@ -24,7 +24,13 @@ export class Stored<T> {
 	/** Replaced whole: a change made inside the value held is neither seen nor saved. */
 	set current(value: T) {
 		// Read untracked: an effect that assigns must not depend on what it assigns.
-		if (Object.is(value, untrack(() => this.#value))) return;
+		if (
+			Object.is(
+				value,
+				untrack(() => this.#value),
+			)
+		)
+			return;
 		this.#value = value;
 		this.save(value);
 	}
@@ -50,12 +56,18 @@ export class Stored<T> {
 		}
 	}
 
-	private static load<T>(key: string, initial: T, options?: StoredOptions): T {
+	private static load<T>(
+		key: string,
+		initial: T,
+		options?: StoredOptions,
+	): T {
 		try {
 			const raw = localStorage.getItem(key);
 			if (raw === null) return initial;
 			const stored: unknown = JSON.parse(raw);
-			return options?.validate && !options.validate(stored) ? initial : (stored as T);
+			return options?.validate && !options.validate(stored)
+				? initial
+				: (stored as T);
 		} catch {
 			return initial;
 		}

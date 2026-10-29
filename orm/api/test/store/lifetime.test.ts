@@ -32,7 +32,8 @@ describe('how long a store lives', () => {
 	};
 
 	afterEach(async () => {
-		for (const database of opened.splice(0)) await database.close().catch(() => {});
+		for (const database of opened.splice(0))
+			await database.close().catch(() => {});
 		storage.clear();
 	});
 
@@ -54,7 +55,9 @@ describe('how long a store lives', () => {
 
 		await first.close();
 		expect(() => Library.get()).toThrow(
-			new StoreError('[store] Library lives while a database is connected; none is.'),
+			new StoreError(
+				'[store] Library lives while a database is connected; none is.',
+			),
 		);
 
 		connect();
@@ -65,17 +68,23 @@ describe('how long a store lives', () => {
 	test('a database store asked for before any database is connected says so', () => {
 		Model.$default = null;
 		expect(() => Library.get()).toThrow(
-			new StoreError('[store] Library lives while a database is connected; none is.'),
+			new StoreError(
+				'[store] Library lives while a database is connected; none is.',
+			),
 		);
 	});
 
 	test('a store is made by get(), never with new', () => {
 		expect(() => new Settings()).toThrow(
-			new StoreError('[store] Settings is made by Settings.get(), not with new.'),
+			new StoreError(
+				'[store] Settings is made by Settings.get(), not with new.',
+			),
 		);
 		connect();
 		expect(() => new Library()).toThrow(
-			new StoreError('[store] Library is made by Library.get(), not with new.'),
+			new StoreError(
+				'[store] Library is made by Library.get(), not with new.',
+			),
 		);
 	});
 
@@ -155,7 +164,9 @@ describe('how long a store lives', () => {
 		await database.close();
 
 		expect(() => library.later()).toThrow(
-			new StoreError('[store] Library has ended: its database is no longer connected.'),
+			new StoreError(
+				'[store] Library has ended: its database is no longer connected.',
+			),
 		);
 	});
 
@@ -188,7 +199,9 @@ describe('how long a store lives', () => {
 		expect(database.isOpen).toBe(false);
 		expect(counter.shown).toEqual([0]);
 		expect(() => Library.get()).toThrow(StoreError);
-		expect(() => Model.database).toThrow('Call Model.connect(database) first');
+		expect(() => Model.database).toThrow(
+			'Call Model.connect(database) first',
+		);
 		await Model.disconnect();
 	});
 
@@ -210,7 +223,9 @@ describe('how long a store lives', () => {
 		counter.library.count = 9;
 		flushSync();
 		expect(counter.shown).toEqual([0]);
-		await expect(database.run(new Statement('SELECT 1'))).rejects.toThrow(/closed/);
+		await expect(database.run(new Statement('SELECT 1'))).rejects.toThrow(
+			/closed/,
+		);
 	});
 
 	test('stored values of a database store begin with the database’s path, or its namespace; the app’s with nothing', () => {

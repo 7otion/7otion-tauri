@@ -23,7 +23,9 @@ export class TabScope {
 	constructor(readonly namespace = '') {
 		const database = Model.$default;
 		if (!database?.isOpen) {
-			throw new StoreError('[store] A tab scope lives while a database is connected; none is.');
+			throw new StoreError(
+				'[store] A tab scope lives while a database is connected; none is.',
+			);
 		}
 		this.database = database;
 		this.forget = database.onLeave(() => this.end());

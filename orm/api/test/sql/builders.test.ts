@@ -214,7 +214,11 @@ const cases: Case[] = [
 			SelectBuilder.from('orders')
 				.groupBy('user_id')
 				.havingRaw('COUNT(*) > ?', [5])
-				.having(group => group.whereRaw('user_id = ?', [1]).orWhereRaw('user_id = ?', [2])),
+				.having(group =>
+					group
+						.whereRaw('user_id = ?', [1])
+						.orWhereRaw('user_id = ?', [2]),
+				),
 		sql: 'SELECT * FROM `orders` GROUP BY `user_id` HAVING (COUNT(*) > ?) AND ((user_id = ?) OR (user_id = ?))',
 		params: [5, 1, 2],
 	},

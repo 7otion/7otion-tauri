@@ -8,7 +8,10 @@ import { Store, type Held, type StoreClass } from './store.svelte';
  * made on first `get()`, ended when the models connect elsewhere or the database closes.
  */
 export abstract class ConnectionStore extends Store {
-	private static readonly ofDatabase = new WeakMap<Database, Map<StoreClass<Store>, Held>>();
+	private static readonly ofDatabase = new WeakMap<
+		Database,
+		Map<StoreClass<Store>, Held>
+	>();
 
 	/** The database this store lives with. */
 	readonly database: Database;
@@ -42,9 +45,10 @@ export abstract class ConnectionStore extends Store {
 	private static connected(asking: string): Database {
 		const database = Model.$default;
 		if (!database?.isOpen) {
-			throw new StoreError(`[store] ${asking} lives while a database is connected; none is.`);
+			throw new StoreError(
+				`[store] ${asking} lives while a database is connected; none is.`,
+			);
 		}
 		return database;
 	}
-
 }

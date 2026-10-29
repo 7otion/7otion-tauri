@@ -74,7 +74,11 @@ export class EagerLoader {
 				parents,
 				name,
 				(parent, value) => {
-					const source = relation.sourceFor?.(parent, name, constraint);
+					const source = relation.sourceFor?.(
+						parent,
+						name,
+						constraint,
+					);
 					parent.$relations.deliver(
 						name,
 						value,
@@ -97,7 +101,11 @@ export class EagerLoader {
 
 		// One related instance may hang off several parents.
 		const related = [
-			...new Set(models.flatMap(model => Collection.modelsIn(model.$relations.held(name)))),
+			...new Set(
+				models.flatMap(model =>
+					Collection.modelsIn(model.$relations.held(name)),
+				),
+			),
 		];
 		if (related.length === 0) return;
 

@@ -103,10 +103,9 @@ describe('bulk writes', () => {
 		expect(orm.crate.statements).toHaveLength(1);
 		expect(users.every(user => !user.isDirty)).toBe(true);
 		expect(
-			(await User.query().orderBy('id').get()).toArray().map(user => [
-				user.name,
-				user.age,
-			]),
+			(await User.query().orderBy('id').get())
+				.toArray()
+				.map(user => [user.name, user.age]),
 		).toEqual([
 			['Anna', 1],
 			['Bob', 20],
@@ -216,10 +215,9 @@ describe('bulk writes', () => {
 		await Order.updateMany([moved!, kept!]);
 
 		expect(
-			(await Order.query().orderBy('number').get()).toArray().map(order => [
-				order.number,
-				order.total,
-			]),
+			(await Order.query().orderBy('number').get())
+				.toArray()
+				.map(order => [order.number, order.total]),
 		).toEqual([
 			[2, 20],
 			[7, 1],
@@ -243,7 +241,9 @@ describe('bulk writes', () => {
 			[true, true],
 			[true, true],
 		]);
-		expect(await User.query().where('id', users[0]!.id).pluck('age')).toEqual([null]);
+		expect(
+			await User.query().where('id', users[0]!.id).pluck('age'),
+		).toEqual([null]);
 	});
 
 	test('a rolled-back bulk write reverts every model', async () => {

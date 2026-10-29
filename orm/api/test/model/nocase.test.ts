@@ -108,10 +108,7 @@ describe('nocase() columns', () => {
 			.first())!;
 		const cities = await City.query().with('owner').orderBy('id').get();
 
-		expect(france.cities.pluck('name').sort()).toEqual([
-			'Lyon',
-			'Paris',
-		]);
+		expect(france.cities.pluck('name').sort()).toEqual(['Lyon', 'Paris']);
 		expect(cities.at(0)!.owner?.name).toBe('France');
 		expect(cities.at(1)!.owner?.name).toBe('France');
 	});

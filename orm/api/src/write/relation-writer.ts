@@ -78,62 +78,67 @@ export class RelationWriter<R extends Model> {
 		try {
 			// Reading the current rows and writing the changes share one transaction, so no
 			// other write can change those rows in between.
-			return await WriteLifecycle.transaction(related.database, tx, async inner => {
-				const owned = this.ownership();
-				const existing = await (related as ModelClass<R>)
-					.query()
-					.whereAnyOf(Object.keys(owned), [Object.values(owned)])
-					.getArray(inner);
+			return await WriteLifecycle.transaction(
+				related.database,
+				tx,
+				async inner => {
+					const owned = this.ownership();
+					const existing = await (related as ModelClass<R>)
+						.query()
+						.whereAnyOf(Object.keys(owned), [Object.values(owned)])
+						.getArray(inner);
 
-				// Several existing rows may match one member (same `matchOn` values). The first is
-				// kept as that member; the others are deleted.
-				const current = new Map<string, R>();
-				const remove: R[] = [];
-				for (const model of existing) {
-					const identity = this.identityOf(model, match);
-					if (identity === null || current.has(identity)) {
-						remove.push(model);
-					} else {
-						current.set(identity, model);
+					// Several existing rows may match one member (same `matchOn` values). The first is
+					// kept as that member; the others are deleted.
+					const current = new Map<string, R>();
+					const remove: R[] = [];
+					for (const model of existing) {
+						const identity = this.identityOf(model, match);
+						if (identity === null || current.has(identity)) {
+							remove.push(model);
+						} else {
+							current.set(identity, model);
+						}
 					}
-				}
 
-				const create: R[] = [];
-				const update = new Map<R, Record<string, unknown>>();
-				let unchanged = 0;
-				const fixed = new Set([
-					...match,
-					...Object.keys(owned),
-					...related.table.primaryKey.columns,
-				]);
+					const create: R[] = [];
+					const update = new Map<R, Record<string, unknown>>();
+					let unchanged = 0;
+					const fixed = new Set([
+						...match,
+						...Object.keys(owned),
+						...related.table.primaryKey.columns,
+					]);
 
-				for (const [identity, row] of incoming) {
-					const model = current.get(identity);
-					current.delete(identity);
+					for (const [identity, row] of incoming) {
+						const model = current.get(identity);
+						current.delete(identity);
 
-					if (!model) {
-						create.push(this.build(row, match, owned));
-						continue;
+						if (!model) {
+							create.push(this.build(row, match, owned));
+							continue;
+						}
+						const changed = this.changesFor(model, row, fixed);
+						if (Object.keys(changed).length > 0)
+							update.set(model, changed);
+						else unchanged++;
 					}
-					const changed = this.changesFor(model, row, fixed);
-					if (Object.keys(changed).length > 0) update.set(model, changed);
-					else unchanged++;
-				}
-				remove.push(...current.values());
+					remove.push(...current.values());
 
-				await new ModelDelete(related).write(remove, inner);
-				await new ModelInsert(related).write(create, inner);
-				await new ModelUpdate(related, {
-					values: model => update.get(model)!,
-				}).write([...update.keys()], inner);
+					await new ModelDelete(related).write(remove, inner);
+					await new ModelInsert(related).write(create, inner);
+					await new ModelUpdate(related, {
+						values: model => update.get(model)!,
+					}).write([...update.keys()], inner);
 
-				return {
-					attached: create.length,
-					detached: remove.length,
-					updated: update.size,
-					unchanged,
-				};
-			});
+					return {
+						attached: create.length,
+						detached: remove.length,
+						updated: update.size,
+						unchanged,
+					};
+				},
+			);
 		} finally {
 			// A load of the relation still on its way read the rows from before; the loaded value follows the write.
 			this.parent.$relations.supersede(this.name);
@@ -157,7 +162,9 @@ export class RelationWriter<R extends Model> {
 					Accessors.assign(probe, column, row[column]);
 				}
 			}
-			const stored = match.map(column => probe.$attributes.draftValue(column));
+			const stored = match.map(column =>
+				probe.$attributes.draftValue(column),
+			);
 
 			// A member needs a value in every match column. Checked as stored, so '' in a column
 			// that stores empty strings as NULL counts as no value too.
@@ -199,12 +206,15 @@ export class RelationWriter<R extends Model> {
 		// The match columns are left out of `fill`: they are assigned below, fillable or not.
 		model.fill(
 			Object.fromEntries(
-				Object.entries(row).filter(([column]) => !match.includes(column)),
+				Object.entries(row).filter(
+					([column]) => !match.includes(column),
+				),
 			) as Patch<R>,
 		);
 
 		for (const column of match) {
-			if (row[column] !== undefined) Accessors.assign(model, column, row[column]);
+			if (row[column] !== undefined)
+				Accessors.assign(model, column, row[column]);
 		}
 		for (const [column, value] of Object.entries(owned)) {
 			if (value !== undefined) model.$attributes.assign(column, value);
@@ -311,7 +321,10 @@ export class RelationWriter<R extends Model> {
 		);
 		return Object.fromEntries(
 			Object.entries(staged).filter(
-				([column, value]) => !table.column(column).storesAs(value, model.$attributes.get(column)),
+				([column, value]) =>
+					!table
+						.column(column)
+						.storesAs(value, model.$attributes.get(column)),
 			),
 		);
 	}

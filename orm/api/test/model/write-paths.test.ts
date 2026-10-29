@@ -218,7 +218,10 @@ describe('query writes keep instances and lists right', () => {
 			crate.invoke = invoke;
 		}
 
-		expect(await User.query().orderBy('id').pluck('email')).toEqual(['a@x', 'b@x']);
+		expect(await User.query().orderBy('id').pluck('email')).toEqual([
+			'a@x',
+			'b@x',
+		]);
 	});
 
 	test('a query delete without a handler leaves a list that held the row', async () => {
@@ -281,10 +284,16 @@ describe('sync', () => {
 	test('sync leaves a member’s unrelated pending edit pending and counts it unchanged', async () => {
 		await orm.open();
 		const post = await Post.create({ title: 'P' });
-		const comment = await Comment.create({ post_id: post.id, body: 'a', sort: 1 });
+		const comment = await Comment.create({
+			post_id: post.id,
+			body: 'a',
+			sort: 1,
+		});
 
 		comment.draft().sort = 9;
-		const result = await post.sync('comments', [{ id: comment.id, body: 'a' }]);
+		const result = await post.sync('comments', [
+			{ id: comment.id, body: 'a' },
+		]);
 
 		expect(result.unchanged).toBe(1);
 		expect(await Comment.query().pluck('sort')).toEqual([1]);

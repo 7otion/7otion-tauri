@@ -25,7 +25,10 @@ const HANDLERS = { journal: 'settlement handlers' };
  * `:committed` handlers run. Journaled on the transaction, so a savepoint rollback drops its part.
  */
 export class Settlement {
-	private static readonly ofTransaction = new WeakMap<Transaction, Settlement>();
+	private static readonly ofTransaction = new WeakMap<
+		Transaction,
+		Settlement
+	>();
 
 	private task: AfterCommitTask | null = null;
 	/** Deleted rows a read made while their delete ran left a second instance for. */
@@ -72,7 +75,10 @@ export class Settlement {
 	}
 
 	/** Takes back what a write that failed had queued, when no savepoint rollback will. */
-	withdraw(handlers: readonly QueuedHandler[], entries: readonly Entry[]): void {
+	withdraw(
+		handlers: readonly QueuedHandler[],
+		entries: readonly Entry[],
+	): void {
 		for (const list of [this.handlers, this.entries] as unknown[][]) {
 			for (const item of list === this.handlers ? handlers : entries) {
 				const index = list.indexOf(item);
@@ -104,7 +110,12 @@ export class Settlement {
 			for (const { source, handler, entries: told } of handlers) {
 				if (told.length === 0) continue;
 				try {
-					await handler(told.map(entry => [shared(entry).model, entry.changes] as const));
+					await handler(
+						told.map(
+							entry =>
+								[shared(entry).model, entry.changes] as const,
+						),
+					);
 				} catch (error) {
 					failures.push({ source, error });
 				}
@@ -114,7 +125,9 @@ export class Settlement {
 	}
 
 	/** Makes the shared instances, loaded relations and collections show this commit, after every earlier commit of the database. */
-	private madeTrue(failures: AfterCommitFailure[]): Promise<{ shared: (entry: Entry) => Entry }> {
+	private madeTrue(
+		failures: AfterCommitFailure[],
+	): Promise<{ shared: (entry: Entry) => Entry }> {
 		const registry = LiveRegistry.of(this.database);
 		return registry.turn(async () => {
 			const resolved = new Map<Entry, Entry>();
@@ -133,7 +146,8 @@ export class Settlement {
 			for (const entry of entries) {
 				const signals = entry.model.$signals;
 				const { table } = entry.model.constructor as ModelClass;
-				if (entry.kind === 'deleted') signals.gone(table.columns.keys());
+				if (entry.kind === 'deleted')
+					signals.gone(table.columns.keys());
 				else if (entry.kind === 'created') signals.created();
 				else signals.committed(Object.keys(entry.changes));
 			}
@@ -141,9 +155,15 @@ export class Settlement {
 			// A write loaded its model's relations again as it landed. The shared instance a
 			// transaction's own one stands for saw no write, so its relations follow here.
 			for (const [index, entry] of entries.entries()) {
-				if (entry.kind === 'deleted' || entry.model === written[index]!.model) continue;
+				if (
+					entry.kind === 'deleted' ||
+					entry.model === written[index]!.model
+				)
+					continue;
 				try {
-					await entry.model.$relations.followKeys(Object.keys(entry.changes));
+					await entry.model.$relations.followKeys(
+						Object.keys(entry.changes),
+					);
 				} catch (error) {
 					failures.push({ source: 'loaded relations', error });
 				}
@@ -167,9 +187,10 @@ export class Settlement {
 
 		if (!model.$scope) {
 			// A read made outside the transaction while it ran may have left another instance for the row.
-			const other = entry.kind === 'deleted' && signature !== null
-				? map.get(modelClass, signature)
-				: undefined;
+			const other =
+				entry.kind === 'deleted' && signature !== null
+					? map.get(modelClass, signature)
+					: undefined;
 			if (other && other !== model) {
 				Settlement.retire(other, signature);
 				this.strays.push({ ...entry, model: other });
@@ -210,7 +231,10 @@ export class Settlement {
 	private static signatureBefore(entry: Entry): string | null {
 		const { table } = entry.model.constructor as ModelClass;
 		const columns = table.primaryKey.columns;
-		const changes = entry.changes as Record<string, { from: unknown } | undefined>;
+		const changes = entry.changes as Record<
+			string,
+			{ from: unknown } | undefined
+		>;
 		return table.signature(
 			columns,
 			columns.map(column =>
@@ -227,7 +251,10 @@ export class Settlement {
 		model.$signals.gone([]);
 		const before = model.$attributes.shownSnapshot();
 		model.$attributes.discard();
-		IdentityMap.of((model.constructor as ModelClass).database).forget(model, signature);
+		IdentityMap.of((model.constructor as ModelClass).database).forget(
+			model,
+			signature,
+		);
 		model.$edited(model.$attributes.shownChangedSince(before));
 	}
 }

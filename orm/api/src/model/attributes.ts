@@ -62,10 +62,12 @@ export class Attributes {
 	/** Copies of every column the draft shows, pending over committed. */
 	draftValues(): Record<string, unknown> {
 		return Object.fromEntries(
-			Object.entries({ ...this.committed, ...this.pending }).map(([column, value]) => [
-				column,
-				this.table.column(column).copy(value),
-			]),
+			Object.entries({ ...this.committed, ...this.pending }).map(
+				([column, value]) => [
+					column,
+					this.table.column(column).copy(value),
+				],
+			),
 		);
 	}
 
@@ -94,7 +96,9 @@ export class Attributes {
 					'Assign null to clear it.',
 			);
 		}
-		return value !== null && typeof value === 'object' && Object.isFrozen(value)
+		return value !== null &&
+			typeof value === 'object' &&
+			Object.isFrozen(value)
 			? this.table.column(column).copy(value)
 			: value;
 	}
@@ -121,7 +125,10 @@ export class Attributes {
 	shownSnapshot(): Record<string, unknown> {
 		const shown: Record<string, unknown> = {};
 		for (const [name, column] of this.table.columns) {
-			shown[name] = name in this.pending ? column.copy(this.pending[name]) : this.committed[name];
+			shown[name] =
+				name in this.pending
+					? column.copy(this.pending[name])
+					: this.committed[name];
 		}
 		return shown;
 	}
@@ -129,7 +136,10 @@ export class Attributes {
 	/** @internal The columns the draft shows differently than when `shownSnapshot()` took `before`. */
 	shownChangedSince(before: Readonly<Record<string, unknown>>): string[] {
 		return [...this.table.columns.keys()].filter(
-			name => !this.table.column(name).storesAs(this.draftValue(name), before[name]),
+			name =>
+				!this.table
+					.column(name)
+					.storesAs(this.draftValue(name), before[name]),
 		);
 	}
 
@@ -138,7 +148,9 @@ export class Attributes {
 		return Object.keys(this.pending).filter(
 			column =>
 				!(column in before) ||
-				!this.table.column(column).storesAs(this.pending[column], before[column]),
+				!this.table
+					.column(column)
+					.storesAs(this.pending[column], before[column]),
 		);
 	}
 
@@ -193,7 +205,11 @@ export class Attributes {
 			if (writer?.isOpen && writer !== readIn) continue;
 			if ((this.writtenAt.get(name) ?? 0) > began) continue;
 			const column = this.table.column(name);
-			if (!this.loaded || !(name in this.committed) || !column.storesAs(value, this.committed[name])) {
+			if (
+				!this.loaded ||
+				!(name in this.committed) ||
+				!column.storesAs(value, this.committed[name])
+			) {
 				changed.push(name);
 			}
 			this.commit(name, column.frozen(value));
@@ -208,7 +224,9 @@ export class Attributes {
 	 */
 	pendingCopy(column: string): object {
 		if (!(column in this.pending)) {
-			this.pending[column] = this.table.column(column).copy(this.committed[column]);
+			this.pending[column] = this.table
+				.column(column)
+				.copy(this.committed[column]);
 			this.copiedOnRead.add(column);
 		}
 		return this.pending[column] as object;
@@ -218,7 +236,11 @@ export class Attributes {
 	private commit(column: string, value: unknown): void {
 		if (this.copiedOnRead.has(column)) {
 			this.copiedOnRead.delete(column);
-			if (this.table.column(column).storesAs(this.pending[column], this.committed[column])) {
+			if (
+				this.table
+					.column(column)
+					.storesAs(this.pending[column], this.committed[column])
+			) {
 				delete this.pending[column];
 			}
 		}
@@ -241,7 +263,10 @@ export class Attributes {
 				else this.writtenIn.delete(name);
 				this.writtenAt.set(name, ++Attributes.clock);
 				this.commit(name, column.frozen(column.copy(value)));
-				if (name in this.pending && column.storesAs(this.pending[name], value)) {
+				if (
+					name in this.pending &&
+					column.storesAs(this.pending[name], value)
+				) {
 					delete this.pending[name];
 				}
 			}
@@ -286,11 +311,17 @@ export class Attributes {
 				this.committed = committed;
 				this.loaded = loaded;
 				for (const column of copiedOnRead) {
-					if (!(column in this.pending) || this.pending[column] === pending[column]) {
+					if (
+						!(column in this.pending) ||
+						this.pending[column] === pending[column]
+					) {
 						this.copiedOnRead.add(column);
 					}
 				}
-				const names = new Set([...Object.keys(pending), ...Object.keys(this.pending)]);
+				const names = new Set([
+					...Object.keys(pending),
+					...Object.keys(this.pending),
+				]);
 				for (const name of names) {
 					// Assigned by the app since the write sent its value: kept.
 					const column = this.table.column(name);
@@ -298,7 +329,10 @@ export class Attributes {
 					if (
 						name in this.pending &&
 						!(name in sent && column.storesAs(now, sent[name])) &&
-						!(name in pending && column.storesAs(now, pending[name]))
+						!(
+							name in pending &&
+							column.storesAs(now, pending[name])
+						)
 					) {
 						continue;
 					}

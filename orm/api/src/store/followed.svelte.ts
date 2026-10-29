@@ -58,13 +58,18 @@ export abstract class Followed<H extends Releasable> {
 	private load(query: ModelQuery<any, any>): Promise<H> {
 		const sequence = ++this.#sequence;
 		const loading = this.#loading.then(() =>
-			sequence === this.#sequence ? this.take(query, sequence) : this.#held,
+			sequence === this.#sequence
+				? this.take(query, sequence)
+				: this.#held,
 		);
 		this.#loading = loading;
 		return loading;
 	}
 
-	private async take(query: ModelQuery<any, any>, sequence: number): Promise<H> {
+	private async take(
+		query: ModelQuery<any, any>,
+		sequence: number,
+	): Promise<H> {
 		let held: H;
 		try {
 			held = await this.fetch(query);

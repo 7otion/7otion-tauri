@@ -21,7 +21,9 @@ describe('a query', () => {
 	test('loads itself: empty and not loaded until the first result lands', async () => {
 		await orm.open();
 		await User.create({ name: 'Ann' });
-		const users = query(() => new Query(() => User.query().orderBy('name')));
+		const users = query(
+			() => new Query(() => User.query().orderBy('name')),
+		);
 
 		expect(users.rows.length).toBe(0);
 		expect(users.loaded).toBe(false);
@@ -34,7 +36,9 @@ describe('a query', () => {
 
 	test('follows commits: what reads it is shown each commit that changed the rows', async () => {
 		await orm.open();
-		const users = query(() => new Query(() => User.query().orderBy('name')));
+		const users = query(
+			() => new Query(() => User.query().orderBy('name')),
+		);
 		await users.settled();
 		const names = new Watch(() => [...users].map(user => user.name).join());
 
@@ -50,7 +54,12 @@ describe('a query', () => {
 		await User.create({ name: 'Bob', active: false });
 		const onlyActive = new State(false);
 		const users = query(
-			() => new Query(() => (onlyActive.value ? User.query().where('active', true) : User.query())),
+			() =>
+				new Query(() =>
+					onlyActive.value
+						? User.query().where('active', true)
+						: User.query(),
+				),
 		);
 		await users.settled();
 		expect(users.rows.length).toBe(2);
@@ -66,7 +75,9 @@ describe('a query', () => {
 	test('gives its first row, and follows that row’s own commits as well as which row it is', async () => {
 		await orm.open();
 		const ann = await User.create({ name: 'Ann' });
-		const users = query(() => new Query(() => User.query().orderBy('name').limit(1)));
+		const users = query(
+			() => new Query(() => User.query().orderBy('name').limit(1)),
+		);
 		const first = new Watch(() => users.first?.name ?? null);
 		await users.settled();
 
@@ -78,7 +89,12 @@ describe('a query', () => {
 
 	test('a failed load keeps the rows it had and reports the error', async () => {
 		await orm.open();
-		const users = query(() => new Query(() => User.query().whereRaw('no_such_column = ?', [1])));
+		const users = query(
+			() =>
+				new Query(() =>
+					User.query().whereRaw('no_such_column = ?', [1]),
+				),
+		);
 		await users.settled();
 
 		expect(users.rows.length).toBe(0);
@@ -112,7 +128,10 @@ describe('a query', () => {
 
 		try {
 			const users = query(
-				() => new Query(() => User.query().where('name', 'LIKE', `${term.value}%`)),
+				() =>
+					new Query(() =>
+						User.query().where('name', 'LIKE', `${term.value}%`),
+					),
 			);
 			await atRead;
 			for (const typed of ['B', 'Bo', 'Bob']) {
@@ -123,7 +142,9 @@ describe('a query', () => {
 			await users.settled();
 
 			expect(users.collection.pluck('name')).toEqual(['Bob']);
-			const asked = crate.calls.filter(call => call.sql?.startsWith('SELECT * FROM `users`'));
+			const asked = crate.calls.filter(call =>
+				call.sql?.startsWith('SELECT * FROM `users`'),
+			);
 			expect(asked.map(call => call.params)).toEqual([['A%'], ['Bob%']]);
 		} finally {
 			crate.invoke = original;

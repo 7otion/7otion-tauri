@@ -48,9 +48,7 @@ describe('scripts', () => {
 	test('a script headed by a statement that returns rows runs whole', async () => {
 		const db = bed.database();
 
-		await db.run(
-			new Statement('PRAGMA journal_mode; CREATE TABLE z (a)'),
-		);
+		await db.run(new Statement('PRAGMA journal_mode; CREATE TABLE z (a)'));
 		await db.run(new Statement('SELECT 1; CREATE TABLE y (a)'));
 
 		expect(await tables(db, 'y', 'z')).toEqual(['y', 'z']);
@@ -69,9 +67,9 @@ describe('scripts', () => {
 			),
 		);
 
-		expect((await db.run(new Statement('SELECT body FROM log'))).rows).toEqual([
-			{ body: 'a;b' },
-		]);
+		expect(
+			(await db.run(new Statement('SELECT body FROM log'))).rows,
+		).toEqual([{ body: 'a;b' }]);
 	});
 
 	test('a script that fails inside its own BEGIN is rolled back, and the writer is free', async () => {
@@ -94,9 +92,9 @@ describe('scripts', () => {
 				tx,
 			);
 		});
-		expect((await db.run(new Statement('SELECT id FROM notes'))).rows).toEqual([
-			{ id: 2 },
-		]);
+		expect(
+			(await db.run(new Statement('SELECT id FROM notes'))).rows,
+		).toEqual([{ id: 2 }]);
 	});
 
 	test('a script of several statements answers no rows', async () => {
@@ -113,7 +111,9 @@ describe('scripts', () => {
 		const db = bed.database();
 
 		const error = await rejection(
-			db.run(new Statement('CREATE TABLE z (x); INSERT INTO z VALUES (?)')),
+			db.run(
+				new Statement('CREATE TABLE z (x); INSERT INTO z VALUES (?)'),
+			),
 		);
 
 		expect(error.code).toBe('value');
@@ -147,9 +147,9 @@ describe('scripts', () => {
 
 		expect(error.code).toBe('misuse');
 		expect(bed.crate.direct(FILE).inTransaction).toBe(false);
-		expect((await db.run(new Statement('SELECT id FROM notes'))).rows).toEqual(
-			[],
-		);
+		expect(
+			(await db.run(new Statement('SELECT id FROM notes'))).rows,
+		).toEqual([]);
 	});
 });
 
@@ -160,8 +160,7 @@ describe('the stand-in keeps to what the crate does', () => {
 		bed.crate.invoke(PREFIX + command, args) as Promise<any>;
 
 	const load = async () =>
-		(await call('load', { path: FILE, config: null }))
-			.handle as number;
+		(await call('load', { path: FILE, config: null })).handle as number;
 
 	test('a select names one column per value, a repeated name included', async () => {
 		const handle = await load();

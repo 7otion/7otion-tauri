@@ -20,7 +20,8 @@ describe('a live count follows the rows it counts', () => {
 		await orm.seed(db, SEED);
 		return db;
 	};
-	const counts = () => orm.crate.statements.filter(sql => sql.startsWith('SELECT COUNT('));
+	const counts = () =>
+		orm.crate.statements.filter(sql => sql.startsWith('SELECT COUNT('));
 
 	test('a row created, deleted, or changed in a column the query filters on moves it', async () => {
 		await open();
@@ -37,7 +38,10 @@ describe('a live count follows the rows it counts', () => {
 
 	test('a change to a column the query does not filter on asks for nothing', async () => {
 		await open();
-		const active = await User.query().where('active', true).orderBy('name').liveCount();
+		const active = await User.query()
+			.where('active', true)
+			.orderBy('name')
+			.liveCount();
 		orm.crate.calls.length = 0;
 
 		await (await User.find(1))!.update({ name: 'Zed' });
@@ -54,7 +58,11 @@ describe('a live count follows the rows it counts', () => {
 	test('it counts the whole result of a query with a limit, as count() does', async () => {
 		await open();
 
-		const total = await User.query().orderBy('id').limit(1).offset(1).liveCount();
+		const total = await User.query()
+			.orderBy('id')
+			.limit(1)
+			.offset(1)
+			.liveCount();
 
 		expect(total.current).toBe(3);
 	});

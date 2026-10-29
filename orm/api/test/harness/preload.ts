@@ -21,7 +21,10 @@ plugin({
 	setup(build) {
 		build.onLoad({ filter: /\.svelte\.ts$/ }, async ({ path }) => {
 			const source = types.transformSync(await Bun.file(path).text());
-			const { js } = compileModule(source, { filename: path, generate: 'client' });
+			const { js } = compileModule(source, {
+				filename: path,
+				generate: 'client',
+			});
 			return { contents: js.code, loader: 'js' };
 		});
 	},

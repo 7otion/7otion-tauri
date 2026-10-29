@@ -99,7 +99,10 @@ describe('a loaded relation follows the database', () => {
 
 	test('a to-one whose key change rolls back is not re-pointed later by the value it rolled back', async () => {
 		await open();
-		const comment = (await Comment.query().with('post').where('id', 1).first())!;
+		const comment = (await Comment.query()
+			.with('post')
+			.where('id', 1)
+			.first())!;
 		const first = comment.post!;
 		Post.registerEvent('update:after', async (_written, tx) => {
 			await comment.update({ post_id: 3 }, tx);
@@ -158,8 +161,13 @@ describe('a loaded relation follows the database', () => {
 
 	test('a hasOne whose held row is deleted reads the other row that still matches', async () => {
 		const db = await open();
-		await orm.seed(db, ["INSERT INTO profiles (user_id, bio) VALUES (1, 'ann second')"]);
-		const ann = (await User.query().with('profile').where('id', 1).first())!;
+		await orm.seed(db, [
+			"INSERT INTO profiles (user_id, bio) VALUES (1, 'ann second')",
+		]);
+		const ann = (await User.query()
+			.with('profile')
+			.where('id', 1)
+			.first())!;
 		expect(ann.profile!.bio).toBe('ann bio');
 
 		await ann.profile!.delete();
@@ -169,11 +177,17 @@ describe('a loaded relation follows the database', () => {
 
 	test('a hasOne keeps its row when another is created and deleted in one transaction', async () => {
 		const db = await open();
-		const ann = (await User.query().with('profile').where('id', 1).first())!;
+		const ann = (await User.query()
+			.with('profile')
+			.where('id', 1)
+			.first())!;
 		const held = ann.profile!;
 
 		await db.transaction(async tx => {
-			const passing = await Profile.create({ user_id: 1, bio: 'passing' }, tx);
+			const passing = await Profile.create(
+				{ user_id: 1, bio: 'passing' },
+				tx,
+			);
 			await passing.delete(tx);
 		});
 
@@ -182,7 +196,10 @@ describe('a loaded relation follows the database', () => {
 
 	test('a hasOne replaced in one transaction, the new row created before the old is deleted, holds the new row', async () => {
 		const db = await open();
-		const ann = (await User.query().with('profile').where('id', 1).first())!;
+		const ann = (await User.query()
+			.with('profile')
+			.where('id', 1)
+			.first())!;
 		const old = ann.profile!;
 		let made!: Profile;
 
@@ -196,7 +213,9 @@ describe('a loaded relation follows the database', () => {
 
 	test('load() of a to-one whose row was deleted resolves to null, as the property reads', async () => {
 		const db = await open();
-		await orm.seed(db, ["INSERT INTO notes (target_kind, target_id, body) VALUES ('user', 1, 'on ann')"]);
+		await orm.seed(db, [
+			"INSERT INTO notes (target_kind, target_id, body) VALUES ('user', 1, 'on ann')",
+		]);
 		const note = (await Note.find(1))!;
 		expect(((await note.load('target')) as User).name).toBe('Ann');
 
@@ -249,7 +268,10 @@ describe('a loaded relation follows the database', () => {
 
 	test('a to-one reloading for its new key is not dropped by a commit that settles meanwhile', async () => {
 		await open();
-		const post = (await Post.query().with('author').where('id', 1).first())!;
+		const post = (await Post.query()
+			.with('author')
+			.where('id', 1)
+			.first())!;
 		const ann = post.author!;
 
 		const gate = gateFirst('FROM `users`');
@@ -275,7 +297,8 @@ describe('a loaded relation follows the database', () => {
 		const deactivating = ann.update({ active: false });
 		while (!gate.held) await tick();
 		const moving = post.update({ user_id: 2 });
-		while ((post.$relations.held('author') as User | null)?.id !== 2) await tick();
+		while ((post.$relations.held('author') as User | null)?.id !== 2)
+			await tick();
 		gate.release();
 		await Promise.all([deactivating, moving]);
 
@@ -285,7 +308,10 @@ describe('a loaded relation follows the database', () => {
 
 	test('a row that joins a to-many loaded with a nested path has that path loaded', async () => {
 		await open();
-		const ann = (await User.query().with('posts.comments').where('id', 1).first())!;
+		const ann = (await User.query()
+			.with('posts.comments')
+			.where('id', 1)
+			.first())!;
 
 		await Post.create({ user_id: 1, title: 'A3' });
 
@@ -294,7 +320,10 @@ describe('a loaded relation follows the database', () => {
 
 	test('a row a to-one takes up has the nested path it was loaded with', async () => {
 		await open();
-		const bob = (await User.query().with('profile.user').where('id', 2).first())!;
+		const bob = (await User.query()
+			.with('profile.user')
+			.where('id', 2)
+			.first())!;
 		expect(bob.profile).toBeNull();
 
 		await Profile.create({ user_id: 2, bio: 'bob bio' });
@@ -304,7 +333,10 @@ describe('a loaded relation follows the database', () => {
 
 	test('a to-one re-pointed in a transaction keeps its nested path once it commits', async () => {
 		const db = await open();
-		const post = (await Post.query().with('author.profile').where('id', 3).first())!;
+		const post = (await Post.query()
+			.with('author.profile')
+			.where('id', 3)
+			.first())!;
 		const ann = (await User.find(1))!;
 
 		await db.transaction(async tx => {

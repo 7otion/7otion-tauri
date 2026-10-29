@@ -237,7 +237,11 @@ export class SelectBuilder extends Filtered implements StatementSource {
 
 	filterColumns(): string[] | null {
 		const { parts } = this;
-		if (parts.joins.length > 0 || parts.groupBy.length > 0 || !parts.having.isEmpty) {
+		if (
+			parts.joins.length > 0 ||
+			parts.groupBy.length > 0 ||
+			!parts.having.isEmpty
+		) {
 			return null;
 		}
 		return parts.where.columns();

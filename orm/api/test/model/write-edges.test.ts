@@ -29,7 +29,10 @@ describe('an insert and columns assigned while it is on its way', () => {
 			await saving;
 
 			expect([user.age, user.email]).toEqual([null, null]);
-			expect([user.draft().age, user.draft().email]).toEqual([40, 'a@x.io']);
+			expect([user.draft().age, user.draft().email]).toEqual([
+				40,
+				'a@x.io',
+			]);
 			expect(user.getDirty().sort()).toEqual(['age', 'email']);
 		},
 		TIMEOUT,

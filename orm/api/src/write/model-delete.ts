@@ -70,12 +70,16 @@ export class ModelDelete<M extends Model> {
 				model.$exists = false;
 				const before = model.$attributes.shownSnapshot();
 				model.$attributes.discard();
-				IdentityMap.holding(model).forget(model, model.$attributes.persistedKeySignature());
+				IdentityMap.holding(model).forget(
+					model,
+					model.$attributes.persistedKeySignature(),
+				);
 				model.$edited(model.$attributes.shownChangedSince(before));
 			}
 			// A row found already gone is in no commit to tell of it.
 			for (const model of mine) {
-				if (!removed.includes(model)) model.$signals.gone(this.modelClass.table.columns.keys());
+				if (!removed.includes(model))
+					model.$signals.gone(this.modelClass.table.columns.keys());
 			}
 			if (removed.length === 0) return [];
 
@@ -114,7 +118,10 @@ export class ModelDelete<M extends Model> {
 	}
 
 	/** Drops this delete's claims, as made: a handler may have changed a model's key since. */
-	private release(tx: Transaction | undefined, claims: readonly string[]): void {
+	private release(
+		tx: Transaction | undefined,
+		claims: readonly string[],
+	): void {
 		if (!tx) return;
 
 		const ledger = tx.journal<string>(CLAIMS);
@@ -141,8 +148,8 @@ export class ModelDelete<M extends Model> {
 			const result = await database.run(
 				DeleteBuilder.from(table.name)
 					.matching(
-						this.modelClass.query().whereAnyOf(keyColumns, chunk).builder
-							.conditions,
+						this.modelClass.query().whereAnyOf(keyColumns, chunk)
+							.builder.conditions,
 					)
 					.returning(...keyColumns),
 				tx,

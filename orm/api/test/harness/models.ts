@@ -232,11 +232,10 @@ export class Article extends Model<typeof Article.schema> {
 	});
 }
 
-const EVENTS = (['create', 'update', 'delete', 'save'] as const).flatMap(
-	verb =>
-		(['before', 'after', 'committed'] as const).map(
-			moment => `${verb}:${moment}` as ModelEvent,
-		),
+const EVENTS = (['create', 'update', 'delete', 'save'] as const).flatMap(verb =>
+	(['before', 'after', 'committed'] as const).map(
+		moment => `${verb}:${moment}` as ModelEvent,
+	),
 );
 
 /** Removes every event a test registered, so none leaks into the next. */

@@ -101,7 +101,9 @@ export class Table {
 	): string | null {
 		return this.storedSignature(
 			columns,
-			columns.map((name, index) => this.column(name).encode(values[index])),
+			columns.map((name, index) =>
+				this.column(name).encode(values[index]),
+			),
 		);
 	}
 
@@ -111,7 +113,9 @@ export class Table {
 		stored: readonly unknown[],
 	): string | null {
 		return PrimaryKey.signature(
-			columns.map((name, index) => this.column(name).comparable(stored[index])),
+			columns.map((name, index) =>
+				this.column(name).comparable(stored[index]),
+			),
 		);
 	}
 

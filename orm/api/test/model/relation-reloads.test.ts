@@ -29,7 +29,10 @@ describe('a loaded relation follows the row it hangs off', () => {
 		await open();
 		Post.registerEvent('create:after', async (written, tx) => {
 			for (const [post] of written) {
-				await Comment.create({ post_id: post.id, body: 'first', sort: 0 }, tx);
+				await Comment.create(
+					{ post_id: post.id, body: 'first', sort: 0 },
+					tx,
+				);
 			}
 		});
 		const post = new Post().fill({ title: 'Draft', user_id: 1 });
@@ -42,7 +45,10 @@ describe('a loaded relation follows the row it hangs off', () => {
 
 	test('a refresh inside a transaction that rolls back leaves the row and its relation as committed', async () => {
 		const db = await open();
-		const post = (await Post.query().with('author').where('id', 1).first())!;
+		const post = (await Post.query()
+			.with('author')
+			.where('id', 1)
+			.first())!;
 
 		await rejection(
 			db.transaction(async tx => {
@@ -135,7 +141,10 @@ describe('sync tells members apart as the rows already there are', () => {
 		class Owner extends Model<typeof Owner.schema> {
 			static readonly schema = this.define({
 				table: 'users',
-				columns: { id: Column.integer().primary(), name: Column.text() },
+				columns: {
+					id: Column.integer().primary(),
+					name: Column.text(),
+				},
 			});
 
 			declare items: Collection<Item>;
@@ -146,9 +155,16 @@ describe('sync tells members apart as the rows already there are', () => {
 
 		const owner = (await Owner.find(1))!;
 		await owner.sync('items', ['Red'], { matchOn: ['name'] });
-		const second = await owner.sync('items', [' red '], { matchOn: ['name'] });
+		const second = await owner.sync('items', [' red '], {
+			matchOn: ['name'],
+		});
 
-		expect(second).toEqual({ attached: 0, detached: 0, updated: 0, unchanged: 1 });
+		expect(second).toEqual({
+			attached: 0,
+			detached: 0,
+			updated: 0,
+			unchanged: 1,
+		});
 	});
 
 	test('a morph’s type column in the key is the ORM’s, so bare members are taken', async () => {
@@ -172,7 +188,10 @@ describe('sync tells members apart as the rows already there are', () => {
 		class Owner extends Model<typeof Owner.schema> {
 			static readonly schema = this.define({
 				table: 'users',
-				columns: { id: Column.integer().primary(), name: Column.text() },
+				columns: {
+					id: Column.integer().primary(),
+					name: Column.text(),
+				},
 			});
 
 			declare labels: Collection<Label>;

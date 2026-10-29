@@ -12,7 +12,11 @@ export class Accessors {
 
 	/** Names starting with `$` are the ORM's own. */
 	static assertFree(name: string, base: object, owner: string): void {
-		if (name.startsWith('$') || name in base || Accessors.reserved.has(name)) {
+		if (
+			name.startsWith('$') ||
+			name in base ||
+			Accessors.reserved.has(name)
+		) {
 			throw new OrmError(
 				`[orm] ${owner}: '${name}' cannot name a column or relation, ` +
 					'since the model already has a member of that name.',
@@ -21,7 +25,11 @@ export class Accessors {
 	}
 
 	/** Refuses a getter, setter or method of the class's own named after a column: a mutator is the one way to change what an assignment stores. */
-	static assertColumnsFree(prototype: object, table: Table, owner: string): void {
+	static assertColumnsFree(
+		prototype: object,
+		table: Table,
+		owner: string,
+	): void {
 		for (const column of table.columns.keys()) {
 			if (!Object.hasOwn(prototype, column)) continue;
 			throw new OrmError(
@@ -64,7 +72,10 @@ export class Accessors {
 			!Object.hasOwn(owner, 'schema');
 			owner = Object.getPrototypeOf(owner)
 		) {
-			const { prototype, name } = owner as { prototype: object; name: string };
+			const { prototype, name } = owner as {
+				prototype: object;
+				name: string;
+			};
 			Accessors.assertColumnsFree(prototype, modelClass.table, name);
 		}
 

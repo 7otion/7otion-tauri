@@ -74,7 +74,10 @@ export class Collection<T> implements Iterable<T> {
 	}
 
 	/** Sorted by a column, or by what `by` gives for each row, nulls first ascending as SQLite orders them; a plain array. */
-	sortBy(by: keyof T | ((row: T) => unknown), direction: 'asc' | 'desc' = 'asc'): T[] {
+	sortBy(
+		by: keyof T | ((row: T) => unknown),
+		direction: 'asc' | 'desc' = 'asc',
+	): T[] {
 		const value = typeof by === 'function' ? by : (row: T) => row[by];
 		const sign = direction === 'desc' ? -1 : 1;
 		return [...this.rows].sort((a, b) => {
@@ -125,12 +128,17 @@ export class Collection<T> implements Iterable<T> {
 	/** @internal The models a loaded relation's value holds: a collection's rows, or the one model. */
 	static modelsIn(value: unknown): Model[] {
 		const list = value instanceof Collection ? value.rows : [value];
-		return list.filter((related): related is Model => related !== null && related !== undefined);
+		return list.filter(
+			(related): related is Model =>
+				related !== null && related !== undefined,
+		);
 	}
 
 	/** @internal Same rows in the same order. */
 	static same(a: readonly unknown[], b: readonly unknown[]): boolean {
-		return a.length === b.length && a.every((row, index) => row === b[index]);
+		return (
+			a.length === b.length && a.every((row, index) => row === b[index])
+		);
 	}
 }
 
@@ -202,7 +210,10 @@ export function follows(source: Decided): object[] {
  * A collection that stays correct: a row that starts to match its query joins, one that stops
  * matching leaves, and its order follows the query. Put right after each commit.
  */
-export class LiveCollection<M extends Model> extends Collection<M> implements Live {
+export class LiveCollection<M extends Model>
+	extends Collection<M>
+	implements Live
+{
 	private released = false;
 	private readonly leave: (() => void) | undefined;
 
@@ -216,8 +227,12 @@ export class LiveCollection<M extends Model> extends Collection<M> implements Li
 			return;
 		}
 		const registry = LiveRegistry.of(source.modelClass.database);
-		registry.follow(this, source.seen ?? registry.version(source.modelClass));
-		for (const modelClass of follows(source)) registry.add(this, modelClass);
+		registry.follow(
+			this,
+			source.seen ?? registry.version(source.modelClass),
+		);
+		for (const modelClass of follows(source))
+			registry.add(this, modelClass);
 	}
 
 	get modelClass(): ModelClass<M> {
@@ -249,7 +264,9 @@ export class LiveCollection<M extends Model> extends Collection<M> implements Li
 			}
 			if (
 				entry.kind === 'created' ||
-				Object.keys(entry.changes).some(column => decidedBy(this.source, column))
+				Object.keys(entry.changes).some(column =>
+					decidedBy(this.source, column),
+				)
 			) {
 				ask = true;
 			}

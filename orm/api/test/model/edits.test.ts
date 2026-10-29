@@ -48,13 +48,15 @@ class Parcel extends Model<typeof Parcel.schema> {
 	});
 }
 
-const PARCELS = 'CREATE TABLE parcels_edits (id INTEGER PRIMARY KEY AUTOINCREMENT, box INTEGER NOT NULL)';
+const PARCELS =
+	'CREATE TABLE parcels_edits (id INTEGER PRIMARY KEY AUTOINCREMENT, box INTEGER NOT NULL)';
 
 /** How often a reader of each of `columns` on the draft, and one of the draft as a whole (`*`), ran again. */
 function edits(model: Model, ...columns: string[]) {
 	const draft = model.draft() as unknown as Record<string, unknown>;
 	const readers = new Map<string, Watch<unknown>>();
-	for (const column of columns) readers.set(column, new Watch(() => draft[column]));
+	for (const column of columns)
+		readers.set(column, new Watch(() => draft[column]));
 	readers.set('*', new Watch(() => model.$signals.readEdits()));
 	return (column: string) => readers.get(column)!.reruns;
 }
@@ -99,7 +101,10 @@ describe('what a draft tells Svelte', () => {
 
 	test('an edit made inside a JSON value through the draft tells that column', async () => {
 		await orm.open();
-		const user = await User.create({ name: 'Ann', settings: { theme: 'light', tags: [] } });
+		const user = await User.create({
+			name: 'Ann',
+			settings: { theme: 'light', tags: [] },
+		});
 		const heard = edits(user, 'settings');
 
 		user.draft().settings!.theme = 'dark';

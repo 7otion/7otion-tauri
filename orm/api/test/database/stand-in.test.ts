@@ -68,9 +68,7 @@ describe('scratch: readers', () => {
 
 		await rejection(db.run(new Statement('BEGIN')));
 		await db.run(new Statement('SELECT count(*) AS n FROM notes'));
-		await db.run(
-			new Statement("INSERT INTO notes (body) VALUES ('a')"),
-		);
+		await db.run(new Statement("INSERT INTO notes (body) VALUES ('a')"));
 
 		expect(
 			(await db.run(new Statement('SELECT count(*) AS n FROM notes')))
@@ -80,16 +78,16 @@ describe('scratch: readers', () => {
 
 	test('the crate applies its default pragmas to readers; the stand-in does too', async () => {
 		const db = bed.database();
-		expect((await db.run(new Statement('PRAGMA foreign_keys'))).rows).toEqual([
-			{ foreign_keys: 1 },
-		]);
+		expect(
+			(await db.run(new Statement('PRAGMA foreign_keys'))).rows,
+		).toEqual([{ foreign_keys: 1 }]);
 	});
 
 	test('a configured pragma reaches the readers, as in the crate', async () => {
 		const db = bed.database({ pragmas: { cache_size: -1234 } });
-		expect((await db.run(new Statement('PRAGMA cache_size'))).rows).toEqual([
-			{ cache_size: -1234 },
-		]);
+		expect((await db.run(new Statement('PRAGMA cache_size'))).rows).toEqual(
+			[{ cache_size: -1234 }],
+		);
 	});
 });
 
@@ -122,13 +120,9 @@ describe('scratch: transactions', () => {
 
 	test('a duplicate rowid is classified unique', async () => {
 		const db = await bed.databaseWith(['CREATE TABLE r (a TEXT)']);
-		await db.run(
-			new Statement("INSERT INTO r (rowid, a) VALUES (1, 'x')"),
-		);
+		await db.run(new Statement("INSERT INTO r (rowid, a) VALUES (1, 'x')"));
 		const error = await rejection(
-			db.run(
-				new Statement("INSERT INTO r (rowid, a) VALUES (1, 'y')"),
-			),
+			db.run(new Statement("INSERT INTO r (rowid, a) VALUES (1, 'y')")),
 		);
 		expect(error).toBeInstanceOf(DatabaseError);
 		expect(error.code).toBe('unique');

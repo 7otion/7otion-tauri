@@ -24,12 +24,16 @@ describe('a database file per project', () => {
 
 	const names = async (database: Database): Promise<string[]> =>
 		(
-			await database.run(new Statement('SELECT name FROM users ORDER BY id'))
+			await database.run(
+				new Statement('SELECT name FROM users ORDER BY id'),
+			)
 		).rows.map(row => row.name as string);
 
 	const titles = async (database: Database): Promise<string[]> =>
 		(
-			await database.run(new Statement('SELECT title FROM posts ORDER BY id'))
+			await database.run(
+				new Statement('SELECT title FROM posts ORDER BY id'),
+			)
 		).rows.map(row => row.title as string);
 
 	test('each project keeps its own rows, and writes go to the one now connected', async () => {
@@ -100,9 +104,9 @@ describe('a database file per project', () => {
 
 		expect(await rejection(query.get())).toBeInstanceOf(OrmError);
 		// Refined after the switch, it is still the query that was built before it.
-		expect(
-			await rejection(query.orderBy('name').get()),
-		).toBeInstanceOf(OrmError);
+		expect(await rejection(query.orderBy('name').get())).toBeInstanceOf(
+			OrmError,
+		);
 	});
 
 	test('a query built against the project before is refused, rather than updating or deleting rows of the one now open', async () => {
@@ -137,7 +141,10 @@ describe('a database file per project', () => {
 	test('a relation loaded after the switch is refused, rather than reaching into the project now open', async () => {
 		const first = await open('first.sqlite');
 		const author = await User.create({ name: 'the author' });
-		await Post.create({ user_id: author.id, title: 'written in the first' });
+		await Post.create({
+			user_id: author.id,
+			title: 'written in the first',
+		});
 
 		const second = await open('second.sqlite');
 		const other = await User.create({ name: 'another author' });
@@ -166,8 +173,12 @@ describe('a database file per project', () => {
 		await open('first.sqlite');
 		await User.create({ name: 'in the first' });
 
-		const second = await orm.bed.databaseWith(SCHEMA, { path: 'second.sqlite' });
-		await second.run(new Statement("INSERT INTO users (name) VALUES ('in the second')"));
+		const second = await orm.bed.databaseWith(SCHEMA, {
+			path: 'second.sqlite',
+		});
+		await second.run(
+			new Statement("INSERT INTO users (name) VALUES ('in the second')"),
+		);
 
 		const reading = User.query().first();
 		Model.connect(second);
@@ -184,10 +195,16 @@ describe('a database file per project', () => {
 		const author = await User.create({ name: 'in the first' });
 		await Post.create({ user_id: author.id, title: 'post of the first' });
 
-		const second = await orm.bed.databaseWith(SCHEMA, { path: 'second.sqlite' });
-		await second.run(new Statement("INSERT INTO users (name) VALUES ('in the second')"));
+		const second = await orm.bed.databaseWith(SCHEMA, {
+			path: 'second.sqlite',
+		});
 		await second.run(
-			new Statement("INSERT INTO posts (user_id, title) VALUES (1, 'post of the second')"),
+			new Statement("INSERT INTO users (name) VALUES ('in the second')"),
+		);
+		await second.run(
+			new Statement(
+				"INSERT INTO posts (user_id, title) VALUES (1, 'post of the second')",
+			),
 		);
 
 		const reading = User.query().with('posts').get();

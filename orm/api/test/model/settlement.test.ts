@@ -7,7 +7,8 @@ import { OrmBed } from '../harness/orm';
 import { Watch } from '../harness/watch.svelte';
 import { rejection } from '../harness/rejection';
 
-const delay = (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms));
+const delay = (ms: number) =>
+	new Promise<void>(resolve => setTimeout(resolve, ms));
 
 describe('what happens once a commit is through', () => {
 	const orm = OrmBed.use();
@@ -36,7 +37,9 @@ describe('what happens once a commit is through', () => {
 	test('a commit that lands while another settles is reported after it, not inside it', async () => {
 		await orm.open();
 		let entered!: () => void;
-		const handlerEntered = new Promise<void>(resolve => (entered = resolve));
+		const handlerEntered = new Promise<void>(
+			resolve => (entered = resolve),
+		);
 		let release!: () => void;
 		const gate = new Promise<void>(resolve => (release = resolve));
 		User.registerEvent('create:committed', async () => {
@@ -72,7 +75,10 @@ describe('what happens once a commit is through', () => {
 		});
 
 		expect(heard).toHaveLength(1);
-		expect({ isShared: heard[0] === shared, exists: heard[0]!.exists }).toEqual({
+		expect({
+			isShared: heard[0] === shared,
+			exists: heard[0]!.exists,
+		}).toEqual({
 			isShared: true,
 			exists: false,
 		});
@@ -118,8 +124,13 @@ describe('what happens once a commit is through', () => {
 			await inside.update({ age: 5 }, tx);
 		});
 
-		const [row] = (await db.run(new Statement('SELECT age FROM users WHERE id = ?', [shared.id])))
-			.rows;
+		const [row] = (
+			await db.run(
+				new Statement('SELECT age FROM users WHERE id = ?', [
+					shared.id,
+				]),
+			)
+		).rows;
 		// The nested write's own save:committed hears 6, then the outer write's.
 		expect({ row: row?.age, shared: shared.age, seen }).toEqual({
 			row: 6,
@@ -187,9 +198,14 @@ describe('what happens once a commit is through', () => {
 		const ann = await User.create({ name: 'Ann' });
 		const age = new Watch(() => ann.age);
 
-		const changed = await User.query().where('id', ann.id).update({ age: 9 });
+		const changed = await User.query()
+			.where('id', ann.id)
+			.update({ age: 9 });
 
 		expect(changed).toBe(1);
-		expect({ bumped: age.reruns, age: ann.age }).toEqual({ bumped: 1, age: 9 });
+		expect({ bumped: age.reruns, age: ann.age }).toEqual({
+			bumped: 1,
+			age: 9,
+		});
 	});
 });

@@ -94,7 +94,9 @@ export class ModelQuery<M extends Model, R = any>
 		const carried = this.toStatement().params.length;
 		const models: M[] = [];
 		for (const chunk of Chunks.of(keys, columns.length, carried)) {
-			models.push(...(await this.whereAnyOf(columns, chunk).getArray(tx)));
+			models.push(
+				...(await this.whereAnyOf(columns, chunk).getArray(tx)),
+			);
 		}
 		return models;
 	}
@@ -222,11 +224,17 @@ export class ModelQuery<M extends Model, R = any>
 		) as this;
 	}
 
-	whereHas<K extends RelationPath<R>>(relation: K, constraint?: HasConstraint<R, K>): this {
+	whereHas<K extends RelationPath<R>>(
+		relation: K,
+		constraint?: HasConstraint<R, K>,
+	): this {
 		return this.has('and', false, relation, constraint);
 	}
 
-	orWhereHas<K extends RelationPath<R>>(relation: K, constraint?: HasConstraint<R, K>): this {
+	orWhereHas<K extends RelationPath<R>>(
+		relation: K,
+		constraint?: HasConstraint<R, K>,
+	): this {
 		return this.has('or', false, relation, constraint);
 	}
 
@@ -261,10 +269,18 @@ export class ModelQuery<M extends Model, R = any>
 
 		const beneath = rest.join('.');
 		const inner: EagerConstraint | undefined =
-			rest.length === 0 ? constraint : query => query.whereHas(beneath, constraint);
+			rest.length === 0
+				? constraint
+				: query => query.whereHas(beneath, constraint);
 		const { subquery, columns, others } = relation.existence(name, inner);
 		return this.withConditions(
-			this.conditions.exists(connector, negated, subquery, columns, others),
+			this.conditions.exists(
+				connector,
+				negated,
+				subquery,
+				columns,
+				others,
+			),
 		);
 	}
 
@@ -318,10 +334,18 @@ export class ModelQuery<M extends Model, R = any>
 
 		const began = Attributes.now();
 		const rows = await this.run(this.rowsOfModel(), tx);
-		const hydrator = new Hydrator(this.modelClass, this.generation, tx, began);
+		const hydrator = new Hydrator(
+			this.modelClass,
+			this.generation,
+			tx,
+			began,
+		);
 		const models = rows.map(row => hydrator.hydrate(row));
 
-		await new EagerLoader(this.eager, tx, keepLoaded).load(models, this.modelClass);
+		await new EagerLoader(this.eager, tx, keepLoaded).load(
+			models,
+			this.modelClass,
+		);
 		return models;
 	}
 

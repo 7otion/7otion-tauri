@@ -105,7 +105,9 @@ export abstract class Store {
 	}
 
 	/** A live collection whose query follows the state `build` reads. */
-	protected query<M extends Model>(build: () => ModelQuery<M, any>): Query<M> {
+	protected query<M extends Model>(
+		build: () => ModelQuery<M, any>,
+	): Query<M> {
 		this.assertLives();
 		return new Query(build);
 	}
@@ -116,14 +118,20 @@ export abstract class Store {
 	}
 
 	/** A value kept in `localStorage`. */
-	protected stored<T>(key: string, initial: T, options?: StoredOptions): Stored<T> {
+	protected stored<T>(
+		key: string,
+		initial: T,
+		options?: StoredOptions,
+	): Stored<T> {
 		this.assertLives();
 		return new Stored(this.prefix + key, initial, options);
 	}
 
 	private assertLives(): void {
 		if (!this.lives) {
-			throw new StoreError(`[store] ${this.constructor.name} has ended: ${this.endsWhen}.`);
+			throw new StoreError(
+				`[store] ${this.constructor.name} has ended: ${this.endsWhen}.`,
+			);
 		}
 	}
 }

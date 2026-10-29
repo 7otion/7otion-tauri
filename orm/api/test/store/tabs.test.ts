@@ -7,7 +7,13 @@ import { Model } from '../../src/model/model';
 import { TabScope } from '../../src/store/tab-scope';
 import { OrmBed } from '../harness/orm';
 import { storage } from '../harness/storage';
-import { Library, Pane, Results, Search, TabBreaks } from '../harness/stores.svelte';
+import {
+	Library,
+	Pane,
+	Results,
+	Search,
+	TabBreaks,
+} from '../harness/stores.svelte';
 
 describe('a store per tab', () => {
 	const orm = OrmBed.use();
@@ -20,7 +26,8 @@ describe('a store per tab', () => {
 	};
 
 	afterEach(async () => {
-		for (const database of opened.splice(0)) await database.close().catch(() => {});
+		for (const database of opened.splice(0))
+			await database.close().catch(() => {});
 		storage.clear();
 	});
 
@@ -60,7 +67,9 @@ describe('a store per tab', () => {
 	test('a scope asked for with no database connected is refused', () => {
 		Model.$default = null;
 		expect(() => new TabScope()).toThrow(
-			new StoreError('[store] A tab scope lives while a database is connected; none is.'),
+			new StoreError(
+				'[store] A tab scope lives while a database is connected; none is.',
+			),
 		);
 	});
 
@@ -77,7 +86,9 @@ describe('a store per tab', () => {
 	test('a tab store is made by get(), never with new', () => {
 		connect();
 		expect(() => new Search()).toThrow(
-			new StoreError('[store] Search is made by Search.get(), not with new.'),
+			new StoreError(
+				'[store] Search is made by Search.get(), not with new.',
+			),
 		);
 	});
 
@@ -106,7 +117,9 @@ describe('a store per tab', () => {
 		scope.end();
 
 		expect(() => Search.get(scope)).toThrow(
-			new StoreError('[store] Search lives while its tab is open; the tab has closed.'),
+			new StoreError(
+				'[store] Search lives while its tab is open; the tab has closed.',
+			),
 		);
 	});
 
@@ -165,8 +178,12 @@ describe('a store per tab', () => {
 	test('stored values of a tab store begin with the database’s namespace and the scope’s', () => {
 		const database = connect({ namespace: 'alpha' });
 
-		expect(Search.get(new TabScope('library')).view.key).toBe('alpha.library.view');
-		expect(Search.get(new TabScope()).view.key).toBe(`${database.namespace}.view`);
+		expect(Search.get(new TabScope('library')).view.key).toBe(
+			'alpha.library.view',
+		);
+		expect(Search.get(new TabScope()).view.key).toBe(
+			`${database.namespace}.view`,
+		);
 	});
 
 	test('two tabs of one kind share a stored value, as one preference', () => {

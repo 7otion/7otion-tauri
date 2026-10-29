@@ -344,7 +344,12 @@ describe('createManyOrIgnore, a key the database generates', () => {
 			{ uniqueBy: ['email'] },
 		);
 
-		expect(users.map(user => user.name)).toEqual(['Ann', 'Bob', 'Cy', 'Dee']);
+		expect(users.map(user => user.name)).toEqual([
+			'Ann',
+			'Bob',
+			'Cy',
+			'Dee',
+		]);
 		const ids = users.map(user => user.id);
 		expect([...ids].sort((a, b) => a - b)).toEqual(ids);
 		expect(

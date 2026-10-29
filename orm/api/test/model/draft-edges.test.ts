@@ -113,7 +113,10 @@ describe('drafts and values at their edges', () => {
 		await open();
 		const article = await Article.create({ title: 'Hello', slug: 'hello' });
 
-		expect((await rejection(article.update({ slug: 'other', title: 'bad' }))).message).toBe('refused');
+		expect(
+			(await rejection(article.update({ slug: 'other', title: 'bad' })))
+				.message,
+		).toBe('refused');
 
 		expect(article.isDirty).toBe(false);
 		expect(article.draft().slug).toBe('hello');
@@ -155,7 +158,10 @@ describe('drafts and values at their edges', () => {
 
 		await rejection(
 			db.transaction(async tx => {
-				await user.update({ settings: { theme: 'light', tags: [] } }, tx);
+				await user.update(
+					{ settings: { theme: 'light', tags: [] } },
+					tx,
+				);
 				throw new Error('undo');
 			}),
 		);

@@ -99,7 +99,9 @@ export class Conditions {
 	others(): object[] {
 		return this.clauses.flatMap(({ condition }) => {
 			if (condition.kind === 'exists') return [...condition.others];
-			return condition.kind === 'group' ? condition.conditions.others() : [];
+			return condition.kind === 'group'
+				? condition.conditions.others()
+				: [];
 		});
 	}
 

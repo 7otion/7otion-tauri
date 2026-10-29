@@ -18,7 +18,10 @@ export class LiveLookup<M extends Model> implements Live {
 			return;
 		}
 		const registry = LiveRegistry.of(source.modelClass.database);
-		registry.follow(this, source.seen ?? registry.version(source.modelClass));
+		registry.follow(
+			this,
+			source.seen ?? registry.version(source.modelClass),
+		);
 	}
 
 	get modelClass(): ModelClass<M> {
@@ -50,18 +53,25 @@ export class LiveLookup<M extends Model> implements Live {
 			}
 			if (
 				entry.kind !== 'created' &&
-				!Object.keys(entry.changes).some(column => decidedBy(this.source, column))
+				!Object.keys(entry.changes).some(column =>
+					decidedBy(this.source, column),
+				)
 			) {
 				continue;
 			}
 			const matches = this.source.matches?.(row);
 			if (matches === undefined) ask = true;
-			else if (matches && row !== held && !candidates.includes(row)) candidates.push(row);
+			else if (matches && row !== held && !candidates.includes(row))
+				candidates.push(row);
 			else if (!matches && row === held) ask = true;
 		}
 		// A row created and deleted in the same commit is no candidate.
 		const standing = candidates.filter(row => row.$exists);
-		if ((heldGone && !unique) || (held && !heldGone && standing.length > 0 && !unique)) ask = true;
+		if (
+			(heldGone && !unique) ||
+			(held && !heldGone && standing.length > 0 && !unique)
+		)
+			ask = true;
 
 		let next: M | null;
 		if (ask) next = (await this.source.fetch())[0] ?? null;
